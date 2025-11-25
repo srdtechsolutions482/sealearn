@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maritime Training Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'primary': '#1D4ED8', // A strong blue for primary actions
+              'primary-dark': '#0A2540', // Dark navy for footers/backgrounds
+              'primary-light': '#EFF6FF',
+              'secondary': '#F7FAFC', // Lighter gray for page backgrounds
+              'text-primary': '#1A202C', // Darkest text
+              'text-secondary': '#4A5568', // Medium gray text
+              'text-tertiary': '#A0AEC0', // Lightest gray text
+              'border-color': '#E2E8F0',
+              'accent-yellow': '#FBBF24', // Brighter, more vibrant yellow
+              'accent-orange': '#F97316',
+              'success': '#16A34A',
+              'success-bg': '#F0FDF4',
+              'warning': '#F59E0B',
+              'warning-bg': '#FFFBEB',
+              'danger': '#DC2626',
+              'danger-bg': '#FEF2F2',
+            },
+          },
+        },
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-secondary text-text-primary antialiased">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
