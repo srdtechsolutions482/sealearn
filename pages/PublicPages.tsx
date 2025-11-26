@@ -411,19 +411,168 @@ const NotFoundPage: React.FC = () => (
     </div>
 );
 
-const InstitutionsPage: React.FC = () => (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-4xl font-bold text-text-primary mb-2">Institutions</h1>
-        <p className="text-text-secondary mb-8">Information about our partner institutions will be available here soon.</p>
-    </div>
-);
+const InstitutionsPage: React.FC = () => {
+    return (<div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-bold text-text-primary mb-10">Institutions</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <Card className="flex flex-col items-center justify-center text-center !p-10 hover:shadow-lg transition-shadow border border-gray-100">
+                    <div className="p-5 bg-blue-50 rounded-full mb-6"><WaveIcon className="w-8 h-8 text-primary"/></div>
+                    <h3 className="font-bold text-lg text-text-primary">BlueWave Maritime</h3>
+                    <p className="text-sm text-text-secondary">Mumbai, India</p>
+                </Card>
+                 <Card className="flex flex-col items-center justify-center text-center !p-10 hover:shadow-lg transition-shadow border border-gray-100">
+                    <div className="p-5 bg-blue-50 rounded-full mb-6"><AnchorIcon className="w-8 h-8 text-primary"/></div>
+                    <h3 className="font-bold text-lg text-text-primary">Seafarer's Choice</h3>
+                    <p className="text-sm text-text-secondary">Chennai, India</p>
+                </Card>
+                 <Card className="flex flex-col items-center justify-center text-center !p-10 hover:shadow-lg transition-shadow border border-gray-100">
+                    <div className="p-5 bg-blue-50 rounded-full mb-6"><PoseidonIcon className="w-8 h-8 text-primary"/></div>
+                    <h3 className="font-bold text-lg text-text-primary">Poseidon Training</h3>
+                    <p className="text-sm text-text-secondary">Kolkata, India</p>
+                </Card>
+                 <Card className="flex flex-col items-center justify-center text-center !p-10 hover:shadow-lg transition-shadow border border-gray-100">
+                    <div className="p-5 bg-blue-50 rounded-full mb-6"><RudderIcon className="w-8 h-8 text-primary"/></div>
+                    <h3 className="font-bold text-lg text-text-primary">Nautical Skills Inc.</h3>
+                    <p className="text-sm text-text-secondary">Goa, India</p>
+                </Card>
+            </div>
+        </div>)
+};
 
-const AboutUsPage: React.FC = () => (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-4xl font-bold text-text-primary mb-2">About Us</h1>
-        <p className="text-text-secondary mb-8">Learn more about Maritime Training Hub and our mission.</p>
+const AboutUsPage: React.FC = () => {
+    const navigate = useNavigate();
+    return(
+    <div className="bg-gray-50 min-h-screen font-sans">
+      {/* Header Section */}
+      <div className="relative">
+        <img
+          src="/assets/ChartingFuture.jpg"
+          alt="Maritime Excellence Banner"
+          className="w-full h-[300px] object-cover rounded-xl"
+        />
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-30 rounded-xl">
+          <h1 className="text-white font-extrabold text-4xl md:text-5xl text-center mb-2">
+            Charting the Future of<br />Maritime Excellence
+          </h1>
+          <p className="text-white text-lg text-center max-w-2xl">
+            Our commitment to empowering seafarers with world-class, DG Shipping-approved training for a safer and more efficient maritime industry.
+          </p>
+        </div>
+      </div>
+
+      {/* Mission & Vision Section */}
+      <div className="flex flex-col md:flex-row items-center mt-12 max-w-5xl mx-auto gap-10 bg-white p-8 rounded-xl shadow">
+        <img
+          src="/assets/TrainningSession.jpg"
+          alt="Training Session"
+          className="w-full md:w-2/5 h-60 object-cover rounded-xl mb-6 md:mb-0"
+        />
+        <div className="flex flex-col gap-8">
+          <div>
+            <h2 className="text-xl font-semibold mb-2">Our Mission</h2>
+            <p className="text-gray-700">
+              To empower maritime professionals with accessible, innovative, and comprehensive training solutions that enhance safety, competence, and career progression. We are dedicated to providing the highest quality training that meets and exceeds industry standards, ensuring every seafarer is equipped for the challenges of the modern maritime world.
+            </p>
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold mb-2">Our Vision</h2>
+            <p className="text-gray-700">
+              To be the leading global platform for maritime education, setting the benchmark for excellence and shaping the future of seafaring through cutting-edge technology and expert-led instruction.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Core Values */}
+      <div className="max-w-5xl mx-auto mt-14 mb-8 bg-white p-8 rounded-xl shadow">
+        <h2 className="text-2xl font-bold text-center mb-6">Our Core Values</h2>
+        <p className="text-center text-gray-600 mb-10">
+          The principles that guide our every decision and action, ensuring we stay true to our mission of maritime excellence.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="flex flex-col items-center p-6 bg-gray-50 rounded-xl">
+            <div className="bg-blue-100 rounded-full p-3 mb-3">
+              <span role="img" aria-label="Safety" className="text-blue-600 text-2xl">🛡️</span>
+            </div>
+            <h3 className="font-semibold mb-2">Safety First</h3>
+            <p className="text-gray-600 text-sm text-center">
+              Prioritizing the well-being of seafarers and the marine environment above all else.
+            </p>
+          </div>
+          <div className="flex flex-col items-center p-6 bg-gray-50 rounded-xl">
+            <div className="bg-blue-100 rounded-full p-3 mb-3">
+              <span role="img" aria-label="Excellence" className="text-blue-600 text-2xl">🏅</span>
+            </div>
+            <h3 className="font-semibold mb-2">Excellence</h3>
+            <p className="text-gray-600 text-sm text-center">
+              Striving for the highest standards in our curriculum, instruction, and support.
+            </p>
+          </div>
+          <div className="flex flex-col items-center p-6 bg-gray-50 rounded-xl">
+            <div className="bg-blue-100 rounded-full p-3 mb-3">
+              <span role="img" aria-label="Innovation" className="text-blue-600 text-2xl">💡</span>
+            </div>
+            <h3 className="font-semibold mb-2">Innovation</h3>
+            <p className="text-gray-600 text-sm text-center">
+              Embracing new technologies and teaching methods to enhance the learning experience.
+            </p>
+          </div>
+          <div className="flex flex-col items-center p-6 bg-gray-50 rounded-xl">
+            <div className="bg-blue-100 rounded-full p-3 mb-3">
+              <span role="img" aria-label="Integrity" className="text-blue-600 text-2xl">⚖️</span>
+            </div>
+            <h3 className="font-semibold mb-2">Integrity</h3>
+            <p className="text-gray-600 text-sm text-center">
+              Conducting our business with honesty, transparency, and a strong ethical compass.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Why Choose Us */}
+      <div className="max-w-5xl mx-auto mb-16 bg-white p-8 rounded-xl shadow">
+        <h2 className="text-2xl font-bold text-center mb-6">Why Choose Us?</h2>
+        <p className="text-center text-gray-600 mb-8">
+          We provide more than just courses; we offer a pathway to a successful and safe maritime career.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex flex-col items-center">
+            <span role="img" aria-label="DG Shipping Approved" className="text-blue-600 text-3xl mb-2">📜</span>
+            <h4 className="font-semibold mb-2">DG Shipping Approved</h4>
+            <p className="text-gray-600 text-sm text-center">
+              Our courses meet the stringent standards set by the Directorate General of Shipping, ensuring your certification is recognized and valued.
+            </p>
+          </div>
+          <div className="flex flex-col items-center">
+            <span role="img" aria-label="Expert Instructors" className="text-blue-600 text-3xl mb-2">👩‍🏫</span>
+            <h4 className="font-semibold mb-2">Expert Instructors</h4>
+            <p className="text-gray-600 text-sm text-center">
+              Learn from seasoned maritime professionals with extensive experience at sea and in the classroom, bringing real-world insights to every lesson.
+            </p>
+          </div>
+          <div className="flex flex-col items-center">
+            <span role="img" aria-label="Flexible Learning" className="text-blue-600 text-3xl mb-2">🕒</span>
+            <h4 className="font-semibold mb-2">Flexible Learning</h4>
+            <p className="text-gray-600 text-sm text-center">
+              Our online platform allows you to learn at your own pace, anytime and anywhere, fitting your training around your demanding schedule.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="bg-blue-600 rounded-xl max-w-5xl mx-auto mb-10 p-10 flex flex-col items-center text-center">
+        <h2 className="text-white text-2xl font-bold mb-3">Ready to Advance Your Career?</h2>
+        <p className="text-white text-base mb-5">
+          Join thousands of seafarers who have enhanced their skills and career prospects through our certified courses. Your next voyage starts here.
+        </p>
+        <button className="bg-white text-blue-600 px-6 py-2 rounded font-semibold shadow hover:bg-blue-50" onClick={() => navigate('/courses')}>
+          Explore Our Courses
+        </button>
+      </div>
     </div>
-);
+)
+};
 
 const ContactPage: React.FC = () => (
     <div className="bg-secondary min-h-screen py-12">

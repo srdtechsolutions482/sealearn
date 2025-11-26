@@ -19,12 +19,14 @@ const PublicNavbar = () => {
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
         <Link to="/" className="flex items-center gap-3">
           <LogoAnchorIcon />
-          <span className="text-xl font-bold text-primary-dark">Maritime Training Hub</span>
+          <span className="text-xl font-bold text-primary-dark">SeaLearn</span>
         </Link>
         <div className="hidden md:flex items-center gap-8 text-md font-medium text-text-primary">
           <NavLink to="/courses" className={({isActive}) => `text-text-secondary hover:text-primary transition-colors ${isActive && 'text-primary font-semibold'}`}>Courses</NavLink>
           <NavLink to="/institutions" className={({isActive}) => `text-text-secondary hover:text-primary transition-colors ${isActive && 'text-primary font-semibold'}`}>Institutions</NavLink>
           <NavLink to="/about" className={({isActive}) => `text-text-secondary hover:text-primary transition-colors ${isActive && 'text-primary font-semibold'}`}>About Us</NavLink>
+          <NavLink to="/contact" className={({isActive}) => `text-text-secondary hover:text-primary transition-colors ${isActive && 'text-primary font-semibold'}`}>Contact</NavLink>
+
         </div>
         <div className="flex items-center gap-4">
           <div className="relative hidden lg:block">
@@ -137,7 +139,7 @@ const Footer = () => (
                       <div className="bg-white p-1.5 rounded-lg">
                         <LogoAnchorIcon />
                       </div>
-                      <span className="text-xl font-bold text-white">Maritime Training</span>
+                      <span className="text-xl font-bold text-white">SeaLearn</span>
                     </Link>
                     <p className="text-sm text-gray-400 leading-relaxed">Empowering seafarers with world-class training. Your compass for career navigation at sea.</p>
                 </div>
@@ -167,7 +169,7 @@ const Footer = () => (
                 </div>
             </div>
             <div className="mt-16 pt-8 border-t border-gray-800 text-center text-sm text-gray-500">
-                <p>&copy; {new Date().getFullYear()} Maritime Training. All rights reserved.</p>
+                <p>&copy; {new Date().getFullYear()} SeaLearn. All rights reserved.</p>
             </div>
         </div>
     </footer>

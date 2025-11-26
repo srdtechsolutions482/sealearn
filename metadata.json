@@ -1,5 +1,5 @@
 {
-  "name": "Maritime Training Hub",
+  "name": "SeaLearn",
   "description": "A comprehensive platform for seafarers to find and enroll in maritime courses offered by various institutes. The platform allows institutes to manage their course listings and an admin to oversee vendors and courses.",
   "requestFramePermissions": []
 }

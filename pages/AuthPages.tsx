@@ -23,7 +23,7 @@ const AuthLayout: React.FC<{children: React.ReactNode, title: string, subtitle?:
                     {children}
                 </div>
                 <div className="mt-auto text-center text-xs text-text-tertiary pt-6">
-                    <p>© 2024 Maritime Training Platform. All Rights Reserved.</p>
+                    <p>© 2024 SeaLearn Platform. All Rights Reserved.</p>
                     <p className="mt-1 text-accent-orange cursor-pointer hover:underline">Help & Support</p>
                 </div>
             </div>
@@ -37,6 +37,7 @@ const LoginPage: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = React.useState(false);
 
     // Simulate a portal title change if user starts typing admin email
     const isAdmin = email.includes('admin');
@@ -60,11 +61,36 @@ const LoginPage: React.FC = () => {
                 {error && <div className="text-danger bg-danger-bg p-3 rounded-lg text-sm text-center">{error}</div>}
                 <Input label="Email Address" id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@test.com" icon={<svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>} required />
                 <div className="relative">
-                    <Input label="Password" id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••" required icon={<LockIcon className="w-5 h-5"/>} />
-                    {/* Manually positioned right icon (View/Eye) */}
-                    <button type="button" className="absolute right-3 top-[34px] text-text-tertiary hover:text-text-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                    </button>
+                    <Input
+                    label="Password"
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••"
+                    required
+                    icon={<LockIcon className="w-5 h-5" />}
+                />
+                {/* Manually positioned right icon (View/Eye) */}
+                <button
+                type="button"
+                className="absolute right-3 top-[34px] text-text-tertiary hover:text-text-primary"
+                onClick={() => setShowPassword(prev => !prev)}
+                >
+                {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                </svg>
+                ) : (
+                    // Normal eye icon (eye open)
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                    </svg>
+                )}
+                </button>
                 </div>
                 <div className="flex justify-between items-center text-sm mt-1">
                     <a href="#" className="text-accent-orange hover:underline ml-auto">Forgot Password?</a>
@@ -79,7 +105,6 @@ const LoginPage: React.FC = () => {
         </AuthLayout>
     );
 };
-
 const RegisterPage: React.FC = () => {
     const [role, setRole] = useState<Role.USER | Role.VENDOR>(Role.USER);
 
@@ -90,7 +115,7 @@ const RegisterPage: React.FC = () => {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <Link to="/" className="flex items-center gap-2">
                         <LogoAnchorIcon />
-                        <span className="text-lg font-bold text-text-primary">Maritime Training Hub</span>
+                        <span className="text-lg font-bold text-text-primary">SeaLearn</span>
                     </Link>
                     <Link to="/login">
                          <Button variant="primary" size="sm" className="px-6">Login</Button>
@@ -156,7 +181,10 @@ const RegisterPage: React.FC = () => {
     );
 };
 
-const UserRegisterForm: React.FC = () => (
+const UserRegisterForm: React.FC = () => {
+    const [showPassword, setShowPassword] = React.useState(false);
+    const [password, setPassword] = useState('');
+return(
     <form className="space-y-5">
         <Input label="Full Name" id="name" placeholder="Enter your full name" type="text" required />
         <Input label="Email Address" id="email" placeholder="Enter your email address" type="email" required />
@@ -172,15 +200,47 @@ const UserRegisterForm: React.FC = () => (
                 </select>
              </div>
         </div>
-        <div className="relative">
+        {/* <div className="relative">
              <Input label="Password" id="password" placeholder="Create a strong password" type="password" required />
              <button type="button" className="absolute right-3 top-[34px] text-text-tertiary hover:text-text-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
-        </div>
+        </div> */}
+        <div className="relative">
+                    <Input
+                    label="Password"
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••"
+                    required
+                    icon={<LockIcon className="w-5 h-5" />}
+                />
+                {/* Manually positioned right icon (View/Eye) */}
+                <button
+                type="button"
+                className="absolute right-3 top-[34px] text-text-tertiary hover:text-text-primary"
+                onClick={() => setShowPassword(prev => !prev)}
+                >
+                {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                </svg>
+                ) : (
+                    // Normal eye icon (eye open)
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                    </svg>
+                )}
+                </button>
+            </div>
         <Button type="submit" variant="primary-dark" className="w-full !py-3 !text-base mt-2">Create My Account</Button>
         
-        <div className="relative my-6">
+        {/* <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border-color"></div>
             </div>
@@ -198,9 +258,10 @@ const UserRegisterForm: React.FC = () => (
                 <svg className="w-5 h-5 text-[#0077b5]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
                 LinkedIn
             </button>
-        </div>
+        </div> */}
     </form>
 );
+}
 
 const VendorRegisterForm: React.FC = () => (
     <form className="space-y-8">
