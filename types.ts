@@ -1,17 +1,17 @@
 export enum Role {
-  USER = 'user',
-  VENDOR = 'vendor',
-  ADMIN = 'admin',
+  USER = "user",
+  VENDOR = "vendor",
+  ADMIN = "admin",
 }
 
 export enum Status {
-  PENDING = 'Pending',
-  APPROVED = 'Approved',
-  REJECTED = 'Rejected',
-  ACTIVE = 'Active',
-  DISABLED = 'Disabled',
-  INTEREST_REGISTERED = 'Interest Registered',
-  VERIFIED = 'Verified',
+  PENDING = "Pending",
+  APPROVED = "Approved",
+  REJECTED = "Rejected",
+  ACTIVE = "Active",
+  DISABLED = "Disabled",
+  INTEREST_REGISTERED = "Interest Registered",
+  VERIFIED = "Verified",
 }
 
 export interface User {
@@ -31,7 +31,12 @@ export interface Vendor extends User {
   accreditationNo: string;
   address: string;
   contactPerson: string;
-  documents: { name: string, url: string, size: string, uploadedDate: string }[];
+  documents: {
+    name: string;
+    url: string;
+    size: string;
+    uploadedDate: string;
+  }[];
   status: Status.PENDING | Status.APPROVED | Status.REJECTED;
   submissionDate?: string;
 }
@@ -46,9 +51,14 @@ export interface Course {
   duration: string; // e.g., "5 days"
   fee: number;
   location: string;
-  type: 'Online' | 'Offline';
+  type: "Online" | "Offline";
   // FIX: Added Status.APPROVED to allow courses to have this status.
-  status: Status.ACTIVE | Status.PENDING | Status.REJECTED | Status.DISABLED | Status.APPROVED;
+  status:
+    | Status.ACTIVE
+    | Status.PENDING
+    | Status.REJECTED
+    | Status.DISABLED
+    | Status.APPROVED;
   seats: number;
   startDate: string;
   imageUrl?: string;
@@ -60,4 +70,15 @@ export interface Enrollment {
   userId: string;
   courseId: string;
   enrollmentDate: string;
+}
+export interface CourseList {
+  id: number;
+  courseName: string;
+  category: string;
+  targetAudience: string;
+  entryRequirements: string;
+  duration: string;
+  validity: string;
+  courseOverview: string;
+  addtionalNotes: string;
 }

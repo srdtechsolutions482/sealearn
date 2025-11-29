@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   Routes,
   Route,
@@ -40,6 +40,27 @@ import {
 import DataTable, { Column } from "../components/DataTable";
 import CourseCard from "../components/CourseCard";
 
+// --- MOCK DATA FOR COURSE NAMES ---
+const courseNameList = [
+  "Advanced Fire Fighting",
+  "Basic Safety Training",
+  "Medical First Aid",
+  "Proficiency in Survival Craft and Rescue Boats",
+  "Security Training for Seafarers with Designated Security Duties",
+  "Global Maritime Distress and Safety System (GMDSS)",
+  "Radar Observer Course",
+  "Automatic Radar Plotting Aids (ARPA)",
+  "Bridge Team Management",
+  "Engine Room Resource Management",
+  "High Voltage Safety and Switch Gear",
+  "Tanker Familiarization",
+  "Ship Security Officer",
+  "Medical Care",
+  "Passenger Ship Crisis Management",
+];
+
+const currencyList = ["INR", "USD", "EUR", "GBP", "AUD", "CAD", "SGD"];
+
 // --- SHARED COMPONENTS ---
 const DashboardHeader: React.FC<{
   title: string;
@@ -54,6 +75,172 @@ const DashboardHeader: React.FC<{
     {children && <div className="flex-shrink-0 mb-1">{children}</div>}
   </div>
 );
+
+const SearchableDropdown: React.FC<{
+  options: string[];
+  value: string | string[];
+  onChange: (value: string | string[]) => void;
+  placeholder?: string;
+  readOnly?: boolean;
+  multiple?: boolean;
+  className?: string;
+  error?: boolean;
+}> = ({
+  options,
+  value,
+  onChange,
+  placeholder,
+  readOnly,
+  multiple = false,
+  className,
+  error,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredOptions = options.filter((option) =>
+    option.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSelect = (option: string) => {
+    if (readOnly) return;
+    if (multiple) {
+      const currentValues = Array.isArray(value) ? value : [];
+      const newValue = currentValues.includes(option)
+        ? currentValues.filter((v) => v !== option)
+        : [...currentValues, option];
+      onChange(newValue);
+    } else {
+      onChange(option);
+      setIsOpen(false);
+      setSearchTerm("");
+    }
+  };
+
+  const removeValue = (e: React.MouseEvent, optionToRemove: string) => {
+    e.stopPropagation();
+    if (multiple && Array.isArray(value)) {
+      onChange(value.filter((v) => v !== optionToRemove));
+    }
+  };
+
+  return (
+    <div className={`relative ${className}`} ref={containerRef}>
+      <div
+        className={`w-full min-h-[38px] px-3 py-2 border rounded-md bg-white flex items-center justify-between cursor-pointer transition-colors ${
+          readOnly
+            ? "bg-gray-50 cursor-default"
+            : "hover:border-primary focus:ring-1 focus:ring-primary"
+        } ${error ? "border-red-500" : "border-border-color"}`}
+        onClick={() => !readOnly && setIsOpen(!isOpen)}
+      >
+        <div className="flex flex-wrap gap-1">
+          {multiple && Array.isArray(value) && value.length > 0 ? (
+            value.map((val) => (
+              <span
+                key={val}
+                className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md flex items-center border border-blue-100"
+              >
+                {val}
+                {!readOnly && (
+                  <button
+                    onClick={(e) => removeValue(e, val)}
+                    className="ml-1 hover:text-blue-900 focus:outline-none"
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                )}
+              </span>
+            ))
+          ) : !multiple && value ? (
+            <span className="text-text-primary text-sm">{value}</span>
+          ) : (
+            <span className="text-text-tertiary text-sm">
+              {placeholder || "Select..."}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center text-text-secondary ml-2">
+          {/* Chevron */}
+          <svg
+            className={`w-4 h-4 transition-transform duration-200 ${
+              isOpen ? "rotate-180" : ""
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </div>
+      </div>
+
+      {isOpen && !readOnly && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-border-color rounded-md shadow-xl max-h-60 overflow-hidden flex flex-col">
+          <div className="p-2 border-b border-gray-100 bg-gray-50">
+            <input
+              type="text"
+              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              autoFocus
+            />
+          </div>
+          <div className="overflow-y-auto flex-1">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => {
+                const isSelected = multiple
+                  ? Array.isArray(value) && value.includes(option)
+                  : value === option;
+                return (
+                  <div
+                    key={option}
+                    className={`px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center justify-between ${
+                      isSelected
+                        ? "bg-blue-50 text-primary font-medium"
+                        : "text-text-primary hover:bg-gray-50"
+                    }`}
+                    onClick={() => handleSelect(option)}
+                  >
+                    {option}
+                    {isSelected && (
+                      <CheckCircleIcon className="w-4 h-4 text-primary" />
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="px-4 py-3 text-sm text-text-tertiary text-center">
+                No options found
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const StatCard: React.FC<{
   title: string;
@@ -329,6 +516,7 @@ const UserProfileView: React.FC = () => {
 // --- VENDOR DASHBOARD ---
 const VendorDashboardView: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   if (!user || user.role !== Role.VENDOR) return null;
 
   const vendor = user as Vendor;
@@ -420,8 +608,11 @@ const VendorDashboardView: React.FC = () => {
             },
             {
               header: "",
-              accessor: () => (
-                <button className="text-primary font-medium hover:underline">
+              accessor: (c) => (
+                <button
+                  onClick={() => navigate(`courses/${c.id}`)}
+                  className="text-primary font-medium hover:underline"
+                >
                   Manage
                 </button>
               ),
@@ -436,10 +627,28 @@ const VendorDashboardView: React.FC = () => {
 
 const VendorCourseManagementView: React.FC = () => {
   const { user } = useAuth();
-  if (!user || user.role !== Role.VENDOR) return null; // Guard
   const navigate = useNavigate();
 
-  const vendorCourses = courses.filter((c) => c.instituteId === user.id);
+  // State for filtering
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"ALL" | Status>("ALL");
+
+  if (!user || user.role !== Role.VENDOR) return null; // Guard
+
+  // Filter Data
+  const filteredCourses = useMemo(() => {
+    return courses
+      .filter((c) => c.instituteId === user.id)
+      .filter((course) => {
+        const matchesSearch =
+          course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          course.courseCode.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus =
+          filterStatus === "ALL" || course.status === filterStatus;
+        return matchesSearch && matchesStatus;
+      });
+  }, [user.id, searchTerm, filterStatus]);
+
   const columns: Column<Course>[] = [
     { header: "COURSE ID", accessor: "courseCode" },
     { header: "COURSE TITLE", accessor: "title" },
@@ -473,6 +682,14 @@ const VendorCourseManagementView: React.FC = () => {
       ),
     },
   ];
+
+  const getFilterButtonClass = (status: "ALL" | Status) => {
+    const isActive = filterStatus === status;
+    return isActive
+      ? "px-4 py-1.5 rounded-md bg-white text-primary font-medium text-sm shadow-sm transition-all"
+      : "px-4 py-1.5 rounded-md text-text-secondary font-medium text-sm hover:bg-white/50 transition-all";
+  };
+
   return (
     <div>
       <DashboardHeader
@@ -503,24 +720,38 @@ const VendorCourseManagementView: React.FC = () => {
               type="text"
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm"
               placeholder="Search by Course Title or ID"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex items-center gap-2 bg-secondary p-1 rounded-lg">
-            <button className="px-4 py-1.5 rounded-md bg-primary-light text-primary font-medium text-sm shadow-sm">
+            <button
+              onClick={() => setFilterStatus("ALL")}
+              className={getFilterButtonClass("ALL")}
+            >
               All
             </button>
-            <button className="px-4 py-1.5 rounded-md text-text-secondary font-medium text-sm hover:bg-white">
+            <button
+              onClick={() => setFilterStatus(Status.APPROVED)}
+              className={getFilterButtonClass(Status.APPROVED)}
+            >
               Approved
             </button>
-            <button className="px-4 py-1.5 rounded-md text-text-secondary font-medium text-sm hover:bg-white">
+            <button
+              onClick={() => setFilterStatus(Status.PENDING)}
+              className={getFilterButtonClass(Status.PENDING)}
+            >
               Pending
             </button>
-            <button className="px-4 py-1.5 rounded-md text-text-secondary font-medium text-sm hover:bg-white">
+            <button
+              onClick={() => setFilterStatus(Status.REJECTED)}
+              className={getFilterButtonClass(Status.REJECTED)}
+            >
               Rejected
             </button>
           </div>
         </div>
-        <DataTable columns={columns} data={vendorCourses} />
+        <DataTable columns={columns} data={filteredCourses} />
       </Card>
     </div>
   );
@@ -565,16 +796,91 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
       ? "Edit Course"
       : "Course Details";
 
-  // Default values
-  const defaultValues = {
+  const [formData, setFormData] = useState({
     title: existingCourse?.title || "",
     description: existingCourse?.description || "",
     price: existingCourse?.fee || "",
+    currency: "INR",
     duration: existingCourse?.duration || "",
-    startDate: "2025-11-22", // Mock data as it's not in the type explicitly in simplified version
-    endDate: "2025-11-27",
-    instructor: "Capt. John Doe",
+    startDate: "",
+    endDate: "",
+    instructor: existingCourse?.instructor || "",
     mode: "Online",
+    location: existingCourse?.location || "",
+    courseType: "Beginner",
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
+    existingCourse?.imageUrl || null
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear error for field when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setThumbnail(file);
+      setThumbnailPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (isReadOnly) return;
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      setThumbnail(file);
+      setThumbnailPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.title?.trim()) newErrors.title = "Course Title is required";
+    if (!formData.courseType) newErrors.courseType = "Course Type is required";
+    if (!formData.description?.trim())
+      newErrors.description = "Description is required";
+    if (!formData.mode) newErrors.mode = "Mode is required";
+    if (!formData.duration) newErrors.duration = "Duration is required";
+    if (!formData.price) newErrors.price = "Fees are required";
+    if (!formData.startDate) newErrors.startDate = "Start Date is required";
+    if (!formData.endDate) newErrors.endDate = "End Date is required";
+
+    if (formData.mode === "Offline" && !formData.location?.trim()) {
+      newErrors.location = "Location is required for offline courses";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = () => {
+    if (validateForm()) {
+      // Proceed with save
+      console.log("Saving course...", formData);
+      navigate("/dashboard/courses");
+    } else {
+      // Optional: Scroll to top if needed, or rely on visual cues
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   return (
@@ -584,10 +890,7 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-text-primary">{pageTitle}</h1>
         {mode === "view" && (
-          <Button
-            variant="primary-dark"
-            onClick={() => navigate(`../${courseId}/edit`)}
-          >
+          <Button variant="primary-dark" onClick={() => navigate("edit")}>
             <EditIcon className="w-4 h-4 mr-2" /> Edit Course
           </Button>
         )}
@@ -603,19 +906,71 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
               Core Details
             </h3>
             <div className="space-y-6">
-              <Input
-                label="Course Title"
-                defaultValue={defaultValues.title}
-                placeholder="e.g. Advanced Fire Fighting"
-                readOnly={isReadOnly}
-              />
-              <Textarea
-                label="Course Description"
-                defaultValue={defaultValues.description}
-                placeholder="Provide a detailed description of the course..."
-                className="h-32"
-                readOnly={isReadOnly}
-              />
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">
+                  Course Title <span className="text-red-500">*</span>
+                </label>
+                <SearchableDropdown
+                  options={courseNameList}
+                  value={formData.title}
+                  onChange={(val) => handleInputChange("title", val)}
+                  placeholder="Select Course Title"
+                  readOnly={isReadOnly}
+                  error={!!errors.title}
+                />
+                {errors.title && (
+                  <p className="mt-1 text-xs text-red-500">{errors.title}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">
+                  Course Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.courseType}
+                  onChange={(e) =>
+                    handleInputChange("courseType", e.target.value)
+                  }
+                  className={`block w-full rounded-md border ${
+                    errors.courseType ? "border-red-500" : "border-border-color"
+                  } bg-white px-4 py-2 text-text-primary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm`}
+                  disabled={isReadOnly}
+                >
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                </select>
+                {errors.courseType && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.courseType}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">
+                  Course Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    handleInputChange("description", e.target.value)
+                  }
+                  placeholder="Provide a detailed description of the course..."
+                  className={`block w-full h-32 rounded-md border ${
+                    errors.description
+                      ? "border-red-500"
+                      : "border-border-color"
+                  } px-4 py-2 text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm`}
+                  readOnly={isReadOnly}
+                />
+                {errors.description && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.description}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -627,20 +982,47 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
             {isReadOnly ? (
               <div className="rounded-lg overflow-hidden border border-gray-200">
                 <img
-                  src={existingCourse?.imageUrl}
-                  alt={existingCourse?.title}
+                  src={thumbnailPreview || existingCourse?.imageUrl}
+                  alt={formData.title}
                   className="w-full h-64 object-cover"
                 />
               </div>
             ) : (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 flex flex-col items-center justify-center text-center hover:bg-gray-50 cursor-pointer transition-colors">
-                <UploadCloudIcon className="w-12 h-12 text-text-tertiary mb-4" />
-                <p className="text-text-primary font-medium">
-                  Drag & drop files here
-                </p>
-                <p className="text-sm text-text-secondary mt-1">
-                  or click to browse. PNG, JPG up to 5MB.
-                </p>
+              <div
+                className="border-2 border-dashed border-gray-300 rounded-lg p-12 flex flex-col items-center justify-center text-center hover:bg-gray-50 cursor-pointer transition-colors"
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={handleFileChange}
+                  accept="image/png, image/jpeg, image/jpg"
+                />
+                {thumbnailPreview ? (
+                  <div className="w-full h-64 relative">
+                    <img
+                      src={thumbnailPreview}
+                      alt="Preview"
+                      className="w-full h-full object-contain"
+                    />
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <p className="text-white font-medium">Click to change</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <UploadCloudIcon className="w-12 h-12 text-text-tertiary mb-4" />
+                    <p className="text-text-primary font-medium">
+                      Drag & drop files here
+                    </p>
+                    <p className="text-sm text-text-secondary mt-1">
+                      or click to browse. PNG, JPG up to 5MB.
+                    </p>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -656,55 +1038,121 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">
-                  Mode
+                  Mode <span className="text-red-500">*</span>
                 </label>
                 <div className="flex bg-secondary p-1 rounded-lg">
                   <button
-                    className={`flex-1 py-2 shadow-sm rounded-md text-sm font-medium ${
+                    type="button"
+                    onClick={() =>
+                      !isReadOnly && handleInputChange("mode", "Online")
+                    }
+                    className={`flex-1 py-2 shadow-sm rounded-md text-sm font-medium transition-colors ${
                       isReadOnly ? "cursor-default" : ""
                     } ${
-                      defaultValues.mode === "Online"
+                      formData.mode === "Online"
                         ? "bg-white text-primary"
-                        : "text-text-secondary"
+                        : "text-text-secondary hover:bg-gray-200"
                     }`}
                   >
                     Online
                   </button>
                   <button
-                    className={`flex-1 py-2 text-sm font-medium ${
+                    type="button"
+                    onClick={() =>
+                      !isReadOnly && handleInputChange("mode", "Offline")
+                    }
+                    className={`flex-1 py-2 text-sm font-medium transition-colors ${
                       isReadOnly ? "cursor-default" : ""
                     } ${
-                      defaultValues.mode === "Offline"
-                        ? "bg-white text-primary"
-                        : "text-text-secondary"
+                      formData.mode === "Offline"
+                        ? "bg-white text-primary shadow-sm rounded-md"
+                        : "text-text-secondary hover:bg-gray-200"
                     }`}
                   >
                     Offline
                   </button>
                 </div>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">
+                  Location{" "}
+                  {formData.mode === "Offline" && (
+                    <span className="text-red-500">*</span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  value={formData.location}
+                  onChange={(e) =>
+                    handleInputChange("location", e.target.value)
+                  }
+                  placeholder="City, Country or URL"
+                  className={`block w-full rounded-md border ${
+                    errors.location ? "border-red-500" : "border-border-color"
+                  } px-4 py-2 text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm`}
+                  readOnly={isReadOnly}
+                />
+                {errors.location && (
+                  <p className="mt-1 text-xs text-red-500">{errors.location}</p>
+                )}
+              </div>
               <div className="relative">
-                <Input
-                  label="Duration"
-                  defaultValue={defaultValues.duration}
+                <label className="block text-sm font-medium text-text-secondary mb-1">
+                  Duration <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.duration}
+                  onChange={(e) =>
+                    handleInputChange("duration", e.target.value)
+                  }
                   placeholder="5"
+                  className={`block w-full rounded-md border ${
+                    errors.duration ? "border-red-500" : "border-border-color"
+                  } px-4 py-2 text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm`}
                   readOnly={isReadOnly}
                 />
                 <span className="absolute right-4 top-[34px] text-text-secondary text-sm">
                   Days
                 </span>
+                {errors.duration && (
+                  <p className="mt-1 text-xs text-red-500">{errors.duration}</p>
+                )}
               </div>
-            </div>
-            <div className="relative">
-              <Input
-                label="Course Fees"
-                defaultValue={defaultValues.price}
-                placeholder="7500"
-                readOnly={isReadOnly}
-              />
-              <span className="absolute left-4 top-[34px] text-text-primary">
-                ₹
-              </span>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">
+                  Course Fees <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="col-span-1">
+                    <SearchableDropdown
+                      options={currencyList}
+                      value={formData.currency}
+                      onChange={(val) => handleInputChange("currency", val)}
+                      readOnly={isReadOnly}
+                      placeholder="INR"
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <input
+                      type="number"
+                      value={formData.price}
+                      onChange={(e) =>
+                        handleInputChange("price", e.target.value)
+                      }
+                      placeholder="7500"
+                      className={`block w-full rounded-md border ${
+                        errors.price ? "border-red-500" : "border-border-color"
+                      } px-4 py-2 text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm`}
+                      readOnly={isReadOnly}
+                    />
+                  </div>
+                </div>
+                {errors.price && (
+                  <p className="mt-1 text-xs text-red-500">{errors.price}</p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -718,27 +1166,50 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
             </h3>
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div className="relative">
-                <Input
-                  label="Start Date"
-                  defaultValue={defaultValues.startDate}
+                <label className="block text-sm font-medium text-text-secondary mb-1">
+                  Start Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) =>
+                    handleInputChange("startDate", e.target.value)
+                  }
                   placeholder="mm/dd/yyyy"
+                  className={`block w-full rounded-md border ${
+                    errors.startDate ? "border-red-500" : "border-border-color"
+                  } px-4 py-2 text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm`}
                   readOnly={isReadOnly}
                 />
-                <CalendarIcon className="absolute right-4 top-[34px] w-5 h-5 text-text-secondary" />
+                {errors.startDate && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.startDate}
+                  </p>
+                )}
               </div>
               <div className="relative">
-                <Input
-                  label="End Date"
-                  defaultValue={defaultValues.endDate}
+                <label className="block text-sm font-medium text-text-secondary mb-1">
+                  End Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) => handleInputChange("endDate", e.target.value)}
                   placeholder="mm/dd/yyyy"
+                  className={`block w-full rounded-md border ${
+                    errors.endDate ? "border-red-500" : "border-border-color"
+                  } px-4 py-2 text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm`}
                   readOnly={isReadOnly}
                 />
-                <CalendarIcon className="absolute right-4 top-[34px] w-5 h-5 text-text-secondary" />
+                {errors.endDate && (
+                  <p className="mt-1 text-xs text-red-500">{errors.endDate}</p>
+                )}
               </div>
             </div>
             <Input
               label="Instructor Name"
-              defaultValue={defaultValues.instructor}
+              value={formData.instructor}
+              onChange={(e) => handleInputChange("instructor", e.target.value)}
               placeholder="e.g., Capt. John Doe"
               readOnly={isReadOnly}
             />
@@ -762,7 +1233,11 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
                 >
                   Cancel
                 </Button>
-                <Button variant="primary-dark" className="px-8 py-3">
+                <Button
+                  variant="primary-dark"
+                  className="px-8 py-3"
+                  onClick={handleSubmit}
+                >
                   {mode === "create" ? "Create Course" : "Save Changes"}
                 </Button>
               </>
@@ -778,6 +1253,7 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
           <div className="bg-white rounded-xl shadow-md overflow-hidden border border-border-color sticky top-6">
             <img
               src={
+                thumbnailPreview ||
                 existingCourse?.imageUrl ||
                 "https://images.unsplash.com/photo-1559024926-751d3b13e873?q=80&w=2070&auto=format&fit=crop"
               }
@@ -787,11 +1263,16 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
             <div className="p-5">
               <div className="flex justify-between items-start mb-2">
                 <h4 className="font-bold text-lg text-text-primary leading-tight">
-                  {defaultValues.title || "Advanced Fire Fighting"}
+                  {formData.title || "Advanced Fire Fighting"}
                 </h4>
-                <span className="bg-teal-50 text-teal-700 text-xs px-2 py-1 rounded font-medium">
-                  Online
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="bg-teal-50 text-teal-700 text-xs px-2 py-1 rounded font-medium">
+                    {formData.mode}
+                  </span>
+                  <span className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded font-medium">
+                    {formData.courseType}
+                  </span>
+                </div>
               </div>
               <p className="text-sm text-text-secondary mb-4">
                 Maritime Institute
@@ -807,19 +1288,21 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>{" "}
-                  {defaultValues.duration || "5"} Days
+                  {formData.duration || "5"} Days
                 </div>
                 <div className="flex items-center gap-1">
                   <CalendarIcon className="w-3 h-3" /> Starts{" "}
-                  {new Date(defaultValues.startDate).toLocaleDateString(
-                    "en-GB",
-                    { day: "numeric", month: "short" }
-                  )}
+                  {formData.startDate
+                    ? new Date(formData.startDate).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      })
+                    : "DD MMM"}
                 </div>
               </div>
               <div className="flex justify-between items-center pt-4 border-t border-border-color">
                 <span className="text-xl font-bold text-primary-dark">
-                  ₹{defaultValues.price || "7500"}
+                  {formData.currency} {formData.price || "7500"}
                 </span>
                 <span className="text-sm font-medium text-primary cursor-pointer">
                   View Details
@@ -833,718 +1316,150 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
   );
 };
 
-const VendorProfileView: React.FC = () => {
-  const { user } = useAuth();
-  if (!user || user.role !== Role.VENDOR) return null; // Guard
-  const vendor = user as Vendor;
-
-  return (
-    <div>
-      <DashboardHeader title="Institute Profile">
-        <Button variant="primary-dark">
-          <EditIcon /> Edit Profile
-        </Button>
-      </DashboardHeader>
-      <Card className="shadow-sm border-0">
-        <div className="mb-8">
-          <h3 className="text-xl font-bold text-text-primary mb-2">
-            Institute Details
-          </h3>
-          <p className="text-text-secondary mb-6">
-            Key information about your institute.
-          </p>
-
-          <div className="space-y-6">
-            <div className="grid grid-cols-3 border-b border-gray-100 pb-4">
-              <div className="text-text-secondary">Institute Name</div>
-              <div className="col-span-2 font-medium text-text-primary">
-                {vendor.instituteName}
-              </div>
-            </div>
-            <div className="grid grid-cols-3 border-b border-gray-100 pb-4">
-              <div className="text-text-secondary">Accreditation No.</div>
-              <div className="col-span-2 font-medium text-text-primary">
-                {vendor.accreditationNo}
-              </div>
-            </div>
-            <div className="grid grid-cols-3 border-b border-gray-100 pb-4">
-              <div className="text-text-secondary">Email</div>
-              <div className="col-span-2 font-medium text-text-primary">
-                {vendor.email}
-              </div>
-            </div>
-            <div className="grid grid-cols-3 pb-4">
-              <div className="text-text-secondary">Status</div>
-              <div className="col-span-2">
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium">
-                  <CheckCircleIcon className="w-4 h-4" /> Verified
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t pt-8">
-          <h3 className="text-xl font-bold text-text-primary mb-2">
-            Official Documents
-          </h3>
-          <p className="text-text-secondary mb-6">
-            Manage accreditation and other official documents.
-          </p>
-
-          <div className="bg-white border border-border-color rounded-xl p-4 flex justify-between items-center max-w-2xl">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gray-100 rounded-lg text-text-secondary">
-                <FileIcon className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="font-medium text-text-primary">
-                  accreditation.pdf
-                </p>
-                <p className="text-xs text-text-secondary">
-                  Uploaded 12 Jan 2024
-                </p>
-              </div>
-            </div>
-            <button className="text-primary-dark font-medium text-sm hover:underline">
-              View
-            </button>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-};
-
 // --- ADMIN DASHBOARD ---
 const AdminDashboardView: React.FC = () => {
-  const pendingVendors = vendors.filter((v) => v.status === Status.PENDING);
+  const { user } = useAuth();
+
+  // Guard clause
+  if (!user || user.role !== Role.ADMIN) return null;
+
+  const totalUsers = allUsers.length;
+  const totalVendors = vendors.length;
+  const totalCourses = courses.length;
+  const pendingVendors = vendors.filter(
+    (v) => v.status === Status.PENDING
+  ).length;
+  const pendingCourses = courses.filter(
+    (c) => c.status === Status.PENDING
+  ).length;
+
   return (
     <div>
-      <DashboardHeader title="Super Admin Dashboard">
-        <span className="text-sm text-text-secondary flex items-center gap-1">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>{" "}
-          Last updated: just now
-        </span>
-      </DashboardHeader>
+      <DashboardHeader
+        title={`Admin Dashboard`}
+        subtitle="Overview of system performance and pending actions."
+      />
 
       <div className="grid md:grid-cols-4 gap-6 mb-10">
         <StatCard
-          title="Total Institutes"
-          value={vendors.length}
-          icon={<SchoolIcon className="w-6 h-6" />}
-          className="p-6 bg-white"
+          title="Total Users"
+          value={totalUsers}
+          icon={<UsersIcon />}
+          className="p-6"
         />
         <StatCard
-          title="Pending Approvals"
-          value={pendingVendors.length}
-          icon={<HourglassIcon className="w-6 h-6 text-yellow-600" />}
-          className="p-6 bg-white"
+          title="Registered Vendors"
+          value={totalVendors}
+          icon={<VendorsIcon />}
+          className="p-6"
         />
         <StatCard
           title="Total Courses"
-          value={courses.length}
-          icon={<BookOpenIcon className="w-6 h-6" />}
-          className="p-6 bg-white"
+          value={totalCourses}
+          icon={<CoursesIcon />}
+          className="p-6"
         />
         <StatCard
-          title="Active Users"
-          value={allUsers.filter((u) => u.role === Role.USER).length}
-          icon={<UsersIcon className="w-6 h-6" />}
-          className="p-6 bg-white"
+          title="Pending Actions"
+          value={pendingVendors + pendingCourses}
+          icon={<HourglassIcon />}
+          className="p-6"
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-8">
-        <div className="col-span-2">
-          <h2 className="text-2xl font-bold text-text-primary mb-6">
-            Institutes Awaiting Approval
-          </h2>
-          <Card className="!p-0 border-0 shadow-sm overflow-hidden">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-secondary text-text-secondary font-semibold uppercase text-xs">
-                <tr>
-                  <th className="px-6 py-4">Institute Name</th>
-                  <th className="px-6 py-4">Date Submitted</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-color">
-                {pendingVendors.length > 0 ? (
-                  pendingVendors.map((v) => (
-                    <tr key={v.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium text-text-primary">
-                        {v.instituteName}
-                      </td>
-                      <td className="px-6 py-4 text-text-secondary">
-                        {v.submissionDate || "2023-10-26"}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="bg-warning-bg text-warning px-2 py-1 rounded text-xs font-bold">
-                          Pending
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Button variant="primary" size="sm">
-                          Review
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-6 py-8 text-center text-text-secondary"
-                    >
-                      No pending approvals
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </Card>
-        </div>
-        <div className="col-span-1">
-          <h2 className="text-2xl font-bold text-text-primary mb-6">
-            Platform Growth Overview
-          </h2>
-          <Card className="h-[400px] flex flex-col justify-center">
-            <div className="flex justify-between items-start mb-8">
-              <div>
-                <p className="text-text-secondary text-sm">New Users</p>
-                <p className="text-3xl font-bold text-text-primary">125</p>
-                <p className="text-success text-xs font-semibold mt-1">
-                  +15% last 30 days
-                </p>
-              </div>
-              <p className="text-xs text-text-secondary">Last 30 Days</p>
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card className="border-0 shadow-sm !p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-lg text-text-primary">
+              Pending Vendors
+            </h3>
+          </div>
+          <div className="space-y-3">
+            {vendors.filter((v) => v.status === Status.PENDING).length > 0 ? (
+              vendors
+                .filter((v) => v.status === Status.PENDING)
+                .slice(0, 5)
+                .map((v) => (
+                  <div
+                    key={v.id}
+                    className="flex justify-between items-center p-3 bg-secondary rounded-lg"
+                  >
+                    <div>
+                      <p className="font-bold text-sm text-text-primary">
+                        {v.name}
+                      </p>
+                      <p className="text-xs text-text-secondary">{v.email}</p>
+                    </div>
+                    <StatusBadge status={v.status} />
+                  </div>
+                ))
+            ) : (
+              <p className="text-text-secondary text-sm">
+                No pending vendor applications.
+              </p>
+            )}
+          </div>
+        </Card>
+
+        <Card className="border-0 shadow-sm !p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-lg text-text-primary">
+              System Stats
+            </h3>
+          </div>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-text-secondary text-sm">System Status</span>
+              <span className="text-success font-bold text-sm">Healthy</span>
             </div>
-            {/* Mock Bar Chart matching the screenshot style */}
-            <div className="flex items-end justify-between h-48 px-2 gap-3 mt-auto">
-              <div className="w-full bg-blue-200 rounded-t-md h-[40%] opacity-50"></div>
-              <div className="w-full bg-blue-200 rounded-t-md h-[60%] opacity-50"></div>
-              <div className="w-full bg-primary rounded-t-md h-[85%]"></div>
-              <div className="w-full bg-blue-200 rounded-t-md h-[55%] opacity-50"></div>
-              <div className="w-full bg-blue-200 rounded-t-md h-[70%] opacity-50"></div>
-              <div className="w-full bg-blue-200 rounded-t-md h-[45%] opacity-50"></div>
-              <div className="w-full bg-blue-200 rounded-t-md h-[90%] opacity-50"></div>
+            <div className="flex justify-between items-center">
+              <span className="text-text-secondary text-sm">
+                Database Connection
+              </span>
+              <span className="text-success font-bold text-sm">Connected</span>
             </div>
-          </Card>
-        </div>
+            <div className="flex justify-between items-center">
+              <span className="text-text-secondary text-sm">Last Backup</span>
+              <span className="text-text-primary font-bold text-sm">
+                Today, 04:00 AM
+              </span>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );
 };
 
-const AdminCourseManagementView: React.FC = () => {
-  const columns: Column<Course>[] = [
-    {
-      header: "",
-      accessor: () => (
-        <input
-          type="checkbox"
-          className="rounded border-gray-300 text-primary focus:ring-primary"
-        />
-      ),
-    },
-    { header: "Course ID", accessor: (c) => `#${c.courseCode}` },
-    { header: "Course Title", accessor: "title" },
-    { header: "Vendor", accessor: "instituteName" },
-    {
-      header: "Status",
-      accessor: (item) => <StatusBadge status={item.status} />,
-    },
-    {
-      header: "Actions",
-      accessor: () => (
-        <div className="flex items-center space-x-3 text-text-secondary">
-          <button className="hover:text-primary">
-            <EditIcon />
-          </button>
-          <button className="hover:text-primary">
-            <ViewIcon />
-          </button>
-          <button className="hover:text-danger">
-            <DeleteIcon />
-          </button>
-        </div>
-      ),
-    },
-  ];
-
-  return (
-    <div>
-      <DashboardHeader title="Course Management">
-        <Button variant="primary">
-          <PlusIcon /> Add New Course
-        </Button>
-      </DashboardHeader>
-      <Card className="!p-0 border-0 shadow-sm">
-        <div className="p-4 border-b border-border-color flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full max-w-xl">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg
-                className="h-5 w-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              className="block w-full pl-10 pr-3 py-2 border border-border-color rounded-md leading-5 bg-white placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm"
-              placeholder="Search by Course Title, ID, or Vendor..."
-            />
-          </div>
-          <div className="flex gap-3 w-full sm:w-auto">
-            <select className="px-3 py-2 border border-border-color rounded-md text-sm text-text-primary bg-white focus:outline-none focus:ring-2 focus:ring-primary/20">
-              <option>Status: All</option>
-            </select>
-            <select className="px-3 py-2 border border-border-color rounded-md text-sm text-text-primary bg-white focus:outline-none focus:ring-2 focus:ring-primary/20">
-              <option>Vendor: All</option>
-            </select>
-            <button className="text-sm text-text-secondary hover:text-primary font-medium whitespace-nowrap">
-              Reset Filters
-            </button>
-          </div>
-        </div>
-        <DataTable columns={columns} data={courses} />
-        <div className="p-4 border-t border-border-color flex justify-between items-center text-sm text-text-secondary">
-          <span>Showing 1 to 10 of {courses.length} results</span>
-          <div className="inline-flex items-center space-x-2">
-            <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 hover:bg-gray-50 bg-white">
-              <ChevronLeftIcon className="w-4 h-4" />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 hover:bg-gray-50 bg-white">
-              <ChevronRightIcon className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-};
-
-const AdminVendorManagementView: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
-
-  const openModal = (vendor: Vendor) => {
-    setSelectedVendor(vendor);
-    setIsModalOpen(true);
-  };
-
-  // Filter to just pending for this specific "Approval Queue" style view
-  const pendingVendors = vendors.filter((v) => v.status === Status.PENDING);
-
-  const columns: Column<Vendor>[] = [
-    {
-      header: "",
-      accessor: () => (
-        <input
-          type="checkbox"
-          className="rounded border-gray-300 text-primary focus:ring-primary"
-        />
-      ),
-    },
-    {
-      header: "INSTITUTE ID",
-      accessor: (v) => `V-0012${v.id.replace("v", "")}`,
-    },
-    { header: "INSTITUTE NAME", accessor: "instituteName" },
-    {
-      header: "DATE SUBMITTED",
-      accessor: (v) => v.submissionDate || "2023-10-26",
-    },
-    {
-      header: "STATUS",
-      accessor: (item) => <StatusBadge status={item.status} />,
-    },
-    {
-      header: "ACTIONS",
-      accessor: (item) => (
-        <button
-          onClick={() => openModal(item)}
-          className="text-primary hover:underline font-medium"
-        >
-          Review
-        </button>
-      ),
-    },
-  ];
-
-  return (
-    <div>
-      <DashboardHeader title="Vendor Approval Queue">
-        <Button variant="primary">
-          <PlusIcon /> Add Vendor
-        </Button>
-      </DashboardHeader>
-
-      <Card className="!p-0 border-0 shadow-sm">
-        <div className="p-4 border-b border-border-color flex items-center justify-between gap-4">
-          <div className="relative w-full max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg
-                className="h-5 w-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm"
-              placeholder="Search by institute name or ID..."
-            />
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="secondary"
-              className="flex items-center gap-2 border-border-color"
-            >
-              <FilterIcon /> Filter
-            </Button>
-            <Button
-              variant="secondary"
-              className="flex items-center gap-2 border-border-color"
-            >
-              Bulk Actions{" "}
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M19 9l-7 7-7-7" />
-              </svg>
-            </Button>
-          </div>
-        </div>
-        <DataTable columns={columns} data={pendingVendors} />
-        <div className="p-4 border-t border-border-color flex justify-between items-center text-sm text-text-secondary">
-          <span>
-            Showing 1 to {pendingVendors.length} of {pendingVendors.length}{" "}
-            results
-          </span>
-          <div className="inline-flex items-center space-x-2">
-            <button
-              className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 hover:bg-gray-50 bg-white"
-              disabled
-            >
-              <ChevronLeftIcon className="w-4 h-4" />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded bg-primary-light text-primary font-bold">
-              1
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 hover:bg-gray-50 bg-white">
-              <ChevronRightIcon className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Review Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Vendor Application Review"
-      >
-        {selectedVendor && (
-          <div>
-            <div className="mb-6">
-              <h3 className="text-xl font-bold mb-4">Vendor Information</h3>
-              <div className="bg-white border border-border-color rounded-lg p-6 space-y-4">
-                <div className="grid grid-cols-3 border-b border-gray-100 pb-4">
-                  <div className="text-text-secondary">Institute Name</div>
-                  <div className="col-span-2 font-medium text-text-primary">
-                    {selectedVendor.instituteName}
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 border-b border-gray-100 pb-4">
-                  <div className="text-text-secondary">Accreditation No</div>
-                  <div className="col-span-2 font-medium text-text-primary">
-                    {selectedVendor.accreditationNo}
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 border-b border-gray-100 pb-4">
-                  <div className="text-text-secondary">Submission Date</div>
-                  <div className="col-span-2 font-medium text-text-primary">
-                    {selectedVendor.submissionDate || "October 26, 2023"}
-                  </div>
-                </div>
-                <div className="grid grid-cols-3">
-                  <div className="text-text-secondary">Status</div>
-                  <div className="col-span-2">
-                    <StatusBadge status={selectedVendor.status} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-6">
-              <div className="col-span-2">
-                <h3 className="text-xl font-bold mb-4">Submitted Documents</h3>
-                <div className="bg-white border border-border-color rounded-lg divide-y divide-border-color">
-                  {selectedVendor.documents.length > 0 ? (
-                    selectedVendor.documents.map((doc) => (
-                      <div
-                        key={doc.name}
-                        className="p-4 flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-red-50 text-red-500 rounded">
-                            <FileIcon />
-                          </div>
-                          <div>
-                            <p className="font-medium text-text-primary">
-                              {doc.name}
-                            </p>
-                            <p className="text-xs text-text-secondary">
-                              {doc.size}
-                            </p>
-                          </div>
-                        </div>
-                        <button className="text-text-secondary hover:text-primary">
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="p-4 text-text-secondary text-sm">
-                      No documents available
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="col-span-1">
-                <div className="bg-white border border-border-color rounded-lg p-6 shadow-sm h-full">
-                  <h3 className="text-lg font-bold mb-2">Actions</h3>
-                  <p className="text-sm text-text-secondary mb-6">
-                    Review the submitted documents and vendor details before
-                    making a decision.
-                  </p>
-                  <div className="space-y-3">
-                    <Button variant="success" className="w-full">
-                      Approve Vendor
-                    </Button>
-                    <Button variant="danger" className="w-full">
-                      Reject Application
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </Modal>
-    </div>
-  );
-};
-
-const AdminProfileView: React.FC = () => {
+const DashboardHome: React.FC = () => {
   const { user } = useAuth();
   if (!user) return null;
 
-  return (
-    <div>
-      <div className="mb-4 text-sm text-text-secondary">Home / Profile</div>
-      <h1 className="text-3xl font-bold text-text-primary mb-2">
-        Personal Information
-      </h1>
-      <p className="text-text-secondary mb-8">
-        Update your photo and personal details here.
-      </p>
-
-      <div className="bg-white rounded-xl border border-border-color p-6 mb-8 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-full bg-gray-200 overflow-hidden">
-            <img
-              src={
-                user.profilePictureUrl ||
-                `https://ui-avatars.com/api/?name=${user.name}&background=random`
-              }
-              alt={user.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-text-primary">{user.name}</h3>
-            <p className="text-text-secondary">{user.email}</p>
-            <p className="text-xs text-text-tertiary mt-1">
-              Last login: 2023-10-27 10:30 AM from 192.168.1.1
-            </p>
-          </div>
-        </div>
-        <Button variant="secondary">Upload new picture</Button>
-      </div>
-
-      <Card className="border-0 shadow-sm !p-8 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <Input label="Full Name" defaultValue={user.name} />
-          <div className="w-full">
-            <label className="block text-sm font-medium text-text-secondary mb-1">
-              Email Address
-            </label>
-            <input
-              type="text"
-              defaultValue={user.email}
-              className="w-full px-4 py-2.5 border border-border-color rounded-lg shadow-sm text-text-secondary bg-gray-50 focus:outline-none"
-              readOnly
-            />
-          </div>
-          <Input
-            label="Phone Number"
-            defaultValue={user.phone || "+1 234 567 890"}
-          />
-          <div className="w-full">
-            <label className="block text-sm font-medium text-text-secondary mb-1">
-              Role
-            </label>
-            <input
-              type="text"
-              defaultValue="Super Administrator"
-              className="w-full px-4 py-2.5 border border-border-color rounded-lg shadow-sm text-text-secondary bg-gray-50 focus:outline-none"
-              readOnly
-            />
-          </div>
-        </div>
-        <div className="flex justify-end gap-4 border-t border-border-color pt-6">
-          <Button variant="secondary">Cancel</Button>
-          <Button variant="primary-dark">Save Changes</Button>
-        </div>
-      </Card>
-
-      <div className="border border-red-200 bg-red-50 rounded-xl p-6 flex items-center justify-between">
-        <div>
-          <h4 className="font-bold text-text-primary">Deactivate Account</h4>
-          <p className="text-sm text-text-secondary mt-1">
-            Permanently deactivate your account. This action cannot be undone.
-          </p>
-        </div>
-        <Button variant="danger">Deactivate</Button>
-      </div>
-    </div>
-  );
-};
-
-const AdminUserManagementView: React.FC = () => {
-  const userList = allUsers.filter((u) => u.role === "user");
-  const columns: Column<User>[] = [
-    { header: "Name", accessor: "name" },
-    { header: "Email", accessor: "email" },
-    { header: "Rank", accessor: "rank" },
-    {
-      header: "Actions",
-      accessor: () => (
-        <div className="flex items-center space-x-3 text-text-secondary">
-          <button className="hover:text-primary">
-            <ViewIcon />
-          </button>
-          <button className="hover:text-danger">
-            <DeleteIcon />
-          </button>
-        </div>
-      ),
-    },
-  ];
-  return (
-    <div>
-      <DashboardHeader title="User Management" />
-      <Card className="!p-0">
-        <DataTable columns={columns} data={userList} />
-      </Card>
-    </div>
-  );
+  if (user.role === Role.ADMIN) return <AdminDashboardView />;
+  if (user.role === Role.VENDOR) return <VendorDashboardView />;
+  return <UserDashboardView />;
 };
 
 const DashboardPages: React.FC = () => {
-  const { role } = useAuth();
-
-  // Fallback simple view for unimplemented pages
-  const GenericView: React.FC<{ title: string }> = ({ title }) => (
-    <div>
-      <DashboardHeader title={title} />
-      <Card>
-        <p>Content for this page is under construction.</p>
-      </Card>
-    </div>
-  );
-
-  const renderUserRoutes = () => (
+  return (
     <Routes>
-      <Route index element={<UserDashboardView />} />
-      <Route path="courses" element={<UserDashboardView />} />
+      <Route index element={<DashboardHome />} />
       <Route path="profile" element={<UserProfileView />} />
-    </Routes>
-  );
-
-  const renderVendorRoutes = () => (
-    <Routes>
-      <Route index element={<VendorDashboardView />} />
       <Route path="courses" element={<VendorCourseManagementView />} />
       <Route
         path="courses/new"
         element={<VendorCourseEditor mode="create" />}
       />
       <Route
-        path="courses/:courseId/edit"
-        element={<VendorCourseEditor mode="edit" />}
-      />
-      <Route
         path="courses/:courseId"
         element={<VendorCourseEditor mode="view" />}
       />
       <Route
-        path="students"
-        element={<GenericView title="Student Enquiries" />}
+        path="courses/:courseId/edit"
+        element={<VendorCourseEditor mode="edit" />}
       />
-      <Route path="profile" element={<VendorProfileView />} />
     </Routes>
   );
-
-  const renderAdminRoutes = () => (
-    <Routes>
-      <Route index element={<AdminDashboardView />} />
-      <Route path="vendors" element={<AdminVendorManagementView />} />
-      <Route path="courses" element={<AdminCourseManagementView />} />
-      <Route path="users" element={<AdminUserManagementView />} />
-      <Route path="profile" element={<AdminProfileView />} />
-    </Routes>
-  );
-
-  switch (role) {
-    case Role.USER:
-      return renderUserRoutes();
-    case Role.VENDOR:
-      return renderVendorRoutes();
-    case Role.ADMIN:
-      return renderAdminRoutes();
-    default:
-      return <div>Invalid Role</div>;
-  }
 };
 
 export default DashboardPages;
