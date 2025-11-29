@@ -444,6 +444,7 @@ const VendorRegisterForm: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [isDeclared, setIsDeclared] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const COURSE_OPTIONS = [
@@ -473,6 +474,7 @@ const VendorRegisterForm: React.FC = () => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
       setFiles((prev) => [...prev, ...newFiles]);
+      setErrors((prev) => ({ ...prev, files: "" }));
     }
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -494,6 +496,7 @@ const VendorRegisterForm: React.FC = () => {
       }
 
       setFiles((prev) => [...prev, ...validFiles]);
+      setErrors((prev) => ({ ...prev, files: "" }));
     }
   };
 
@@ -506,8 +509,74 @@ const VendorRegisterForm: React.FC = () => {
     setFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const newErrors: Record<string, string> = {};
+    const formData = new FormData(e.currentTarget);
+
+    // Validate Required Text Fields
+    const requiredFields = [
+      { key: "instituteName", label: "Institute Name" },
+      { key: "accreditation", label: "Accreditation Number" },
+      { key: "licenseNumber", label: "License Number" },
+      { key: "issuingAuthority", label: "Issuing Authority" },
+      { key: "validFrom", label: "Vendor Approval Date" },
+      { key: "validUntil", label: "Valid Until Date" },
+    ];
+
+    requiredFields.forEach(({ key, label }) => {
+      const value = formData.get(key);
+      if (!value || value.toString().trim() === "") {
+        newErrors[key] = `${label} is required`;
+      }
+    });
+
+    // Validate Files
+    if (files.length === 0) {
+      newErrors["files"] =
+        "Please upload the required documentation (Resolution Copy or Accreditation Certificate).";
+    }
+
+    // Validate Self Declaration
+    if (!isDeclared) {
+      newErrors["selfDeclaration"] = "You must accept the self declaration.";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      // Find first error and scroll to it
+      const firstErrorKey = Object.keys(newErrors)[0];
+      const elementId =
+        firstErrorKey === "files"
+          ? "files-section"
+          : firstErrorKey === "selfDeclaration"
+          ? "declaration-section"
+          : firstErrorKey;
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+
+    alert("Application submitted successfully!");
+  };
+
+  const getInputErrorClass = (name: string) => {
+    return errors[name]
+      ? "!border-danger !focus:border-danger !focus:ring-danger"
+      : "";
+  };
+
+  const renderErrorMsg = (name: string) => {
+    return errors[name] ? (
+      <p className="text-danger text-xs mt-1">{errors[name]}</p>
+    ) : null;
+  };
+
   return (
-    <form className="space-y-8">
+    <form className="space-y-8" onSubmit={handleSubmit} noValidate>
       <p className="text-right text-xs text-text-tertiary mb-2">
         <span className="text-danger">*</span> Indicates mandatory fields
       </p>
@@ -518,28 +587,42 @@ const VendorRegisterForm: React.FC = () => {
           Institute Profile
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Input
-            label={
-              <span>
-                Institute Name <span className="text-danger">*</span>
-              </span>
-            }
-            id="instituteName"
-            placeholder="Enter the full name of your institute"
-            type="text"
-            required
-          />
-          <Input
-            label={
-              <span>
-                Accreditation Number <span className="text-danger">*</span>
-              </span>
-            }
-            id="accreditation"
-            placeholder="Enter your official accreditation number"
-            type="text"
-            required
-          />
+          <div>
+            <Input
+              label={
+                <span>
+                  Institute Name <span className="text-danger">*</span>
+                </span>
+              }
+              id="instituteName"
+              name="instituteName"
+              placeholder="Enter the full name of your institute"
+              type="text"
+              className={getInputErrorClass("instituteName")}
+              onChange={() =>
+                setErrors((prev) => ({ ...prev, instituteName: "" }))
+              }
+            />
+            {renderErrorMsg("instituteName")}
+          </div>
+          <div>
+            <Input
+              label={
+                <span>
+                  Accreditation Number <span className="text-danger">*</span>
+                </span>
+              }
+              id="accreditation"
+              name="accreditation"
+              placeholder="Enter your official accreditation number"
+              type="text"
+              className={getInputErrorClass("accreditation")}
+              onChange={() =>
+                setErrors((prev) => ({ ...prev, accreditation: "" }))
+              }
+            />
+            {renderErrorMsg("accreditation")}
+          </div>
         </div>
       </section>
 
@@ -549,48 +632,74 @@ const VendorRegisterForm: React.FC = () => {
           License & Approval Details
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Input
-            label={
-              <span>
-                License Number <span className="text-danger">*</span>
-              </span>
-            }
-            id="licenseNumber"
-            placeholder="Enter official license number"
-            type="text"
-            required
-          />
-          <Input
-            label={
-              <span>
-                Issuing Authority <span className="text-danger">*</span>
-              </span>
-            }
-            id="issuingAuthority"
-            placeholder="e.g. DG Shipping"
-            type="text"
-            required
-          />
-          <Input
-            label={
-              <span>
-                Vendor Approval Date <span className="text-danger">*</span>
-              </span>
-            }
-            id="validFrom"
-            type="date"
-            required
-          />
-          <Input
-            label={
-              <span>
-                Valid Until <span className="text-danger">*</span>
-              </span>
-            }
-            id="validUntil"
-            type="date"
-            required
-          />
+          <div>
+            <Input
+              label={
+                <span>
+                  License Number <span className="text-danger">*</span>
+                </span>
+              }
+              id="licenseNumber"
+              name="licenseNumber"
+              placeholder="Enter official license number"
+              type="text"
+              className={getInputErrorClass("licenseNumber")}
+              onChange={() =>
+                setErrors((prev) => ({ ...prev, licenseNumber: "" }))
+              }
+            />
+            {renderErrorMsg("licenseNumber")}
+          </div>
+          <div>
+            <Input
+              label={
+                <span>
+                  Issuing Authority <span className="text-danger">*</span>
+                </span>
+              }
+              id="issuingAuthority"
+              name="issuingAuthority"
+              placeholder="e.g. DG Shipping"
+              type="text"
+              className={getInputErrorClass("issuingAuthority")}
+              onChange={() =>
+                setErrors((prev) => ({ ...prev, issuingAuthority: "" }))
+              }
+            />
+            {renderErrorMsg("issuingAuthority")}
+          </div>
+          <div>
+            <Input
+              label={
+                <span>
+                  Vendor Approval Date <span className="text-danger">*</span>
+                </span>
+              }
+              id="validFrom"
+              name="validFrom"
+              type="date"
+              className={getInputErrorClass("validFrom")}
+              onChange={() => setErrors((prev) => ({ ...prev, validFrom: "" }))}
+            />
+            {renderErrorMsg("validFrom")}
+          </div>
+          <div>
+            <Input
+              label={
+                <span>
+                  Valid Until <span className="text-danger">*</span>
+                </span>
+              }
+              id="validUntil"
+              name="validUntil"
+              type="date"
+              className={getInputErrorClass("validUntil")}
+              onChange={() =>
+                setErrors((prev) => ({ ...prev, validUntil: "" }))
+              }
+            />
+            {renderErrorMsg("validUntil")}
+          </div>
         </div>
       </section>
 
@@ -730,7 +839,7 @@ const VendorRegisterForm: React.FC = () => {
       </section>
 
       {/* Documentation */}
-      <section>
+      <section id="files-section">
         <h3 className="text-lg font-bold text-text-primary mb-4 pb-2 border-b border-border-color">
           Documentation
         </h3>
@@ -747,15 +856,27 @@ const VendorRegisterForm: React.FC = () => {
           multiple
         />
         <div
-          className="border-2 border-dashed border-primary/30 rounded-lg p-10 bg-primary-light/10 text-center cursor-pointer hover:bg-primary-light/20 transition-colors"
+          className={`border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors ${
+            errors.files
+              ? "border-danger bg-red-50"
+              : "border-primary/30 bg-primary-light/10 hover:bg-primary-light/20"
+          }`}
           onClick={() => fileInputRef.current?.click()}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
           <div className="flex justify-center mb-3">
-            <UploadCloudIcon className="h-10 w-10 text-primary opacity-60" />
+            <UploadCloudIcon
+              className={`h-10 w-10 ${
+                errors.files ? "text-danger" : "text-primary"
+              } opacity-60`}
+            />
           </div>
-          <p className="text-primary font-semibold">
+          <p
+            className={`${
+              errors.files ? "text-danger" : "text-primary"
+            } font-semibold`}
+          >
             Click to upload{" "}
             <span className="text-text-secondary font-normal">
               or drag and drop
@@ -765,6 +886,7 @@ const VendorRegisterForm: React.FC = () => {
             PDF, JPEG, PNG (MAX. 5MB) - You can upload multiple files
           </p>
         </div>
+        {renderErrorMsg("files")}
 
         {/* File List */}
         {files.length > 0 && (
@@ -797,23 +919,33 @@ const VendorRegisterForm: React.FC = () => {
       </section>
 
       {/* Self Declaration */}
-      <section>
-        <div className="flex items-start gap-3 p-4 bg-secondary/50 rounded-lg border border-border-color">
+      <section id="declaration-section">
+        <div
+          className={`flex items-start gap-3 p-4 rounded-lg border ${
+            errors.selfDeclaration
+              ? "border-danger bg-red-50"
+              : "border-border-color bg-secondary/50"
+          }`}
+        >
           <div className="flex h-6 items-center">
             <input
               id="selfDeclaration"
               name="selfDeclaration"
               type="checkbox"
               checked={isDeclared}
-              onChange={(e) => setIsDeclared(e.target.checked)}
+              onChange={(e) => {
+                setIsDeclared(e.target.checked);
+                setErrors((prev) => ({ ...prev, selfDeclaration: "" }));
+              }}
               className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-              required
             />
           </div>
           <div className="text-sm">
             <label
               htmlFor="selfDeclaration"
-              className="font-medium text-text-primary"
+              className={`font-medium ${
+                errors.selfDeclaration ? "text-danger" : "text-text-primary"
+              }`}
             >
               Self Declaration <span className="text-danger">*</span>
             </label>
@@ -823,16 +955,13 @@ const VendorRegisterForm: React.FC = () => {
               false information may lead to the rejection of this application or
               revocation of approval.
             </p>
+            {renderErrorMsg("selfDeclaration")}
           </div>
         </div>
       </section>
 
       <div className="pt-4">
-        <Button
-          type="submit"
-          className="w-full !py-3 !text-base"
-          disabled={!isDeclared}
-        >
+        <Button type="submit" className="w-full !py-3 !text-base">
           Register
         </Button>
       </div>
