@@ -19,7 +19,7 @@ import {
   ChevronRightIcon,
   CheckCircleIcon,
 } from "../components/ui";
-
+import banner from "../assets/banner.jpg";
 const TrophyIcon: React.FC = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -48,7 +48,7 @@ const HomePage: React.FC = () => (
     <section className="relative bg-primary-dark h-[600px]">
       <div className="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1559024926-751d3b13e873?q=80&w=2070&auto=format&fit=crop"
+           src={banner}
           alt="Cargo ship on the ocean"
           className="w-full h-full object-cover opacity-30"
         />
