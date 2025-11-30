@@ -347,7 +347,7 @@ export const enrollments: Enrollment[] = [
 export const courselist: CourseList[] = [
   {
     id: 1,
-    courseName: "Basic STCW Safety Training",
+    courseName: "BST-001 Basic STCW Safety Training",
     category: "Basic",
     targetAudience: "All Seafarers",
     entryRequirements:
@@ -361,7 +361,7 @@ export const courselist: CourseList[] = [
   {
     id: 2,
     courseName:
-      "BTLGTCO (Basic Training Liquified Gas Tanker Cargo Operations)",
+      "BTLGTCO-002 (Basic Training Liquified Gas Tanker Cargo Operations)",
     category: "Basic",
     targetAudience: "Officers & personnel handling Liquified Gas Tanker cargo",
     entryRequirements:
@@ -373,7 +373,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 3,
-    courseName: "BTOCTCO (Basic Training Oil & Chemical Tanker Cargo Ops)",
+    courseName: "BTOCTCO-003 (Basic Training Oil & Chemical Tanker Cargo Ops)",
     category: "Basic",
     targetAudience: "Officers handling Oil/Chemical tanker cargo",
     entryRequirements:
@@ -385,7 +385,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 4,
-    courseName: "EFA (Elementary First Aid)",
+    courseName: "EFA-004 (Elementary First Aid)",
     category: "Basic",
     targetAudience: "All Seafarers with old EFA certificate",
     entryRequirements:
@@ -397,7 +397,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 5,
-    courseName: "PSF (Passenger Ship Familiarization / Crowd Management)",
+    courseName: "PSF-005 (Passenger Ship Familiarization / Crowd Management)",
     category: "Basic",
     targetAudience: "Personnel employed on passenger ships",
     entryRequirements: "Proof of Citizenship + INDoS",
@@ -408,7 +408,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 6,
-    courseName: "PSSR (Personal Safety & Social Responsibility)",
+    courseName: "PSSR-006 (Personal Safety & Social Responsibility)",
     category: "Basic",
     targetAudience: "Seafarers with old PSSR certificate",
     entryRequirements: "Old PSSR + Indian CDC + INDoS + Proof of Citizenship",
@@ -419,7 +419,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 7,
-    courseName: "STSDSD",
+    courseName: "STSDSD-007 STSDSD",
     category: "Basic",
     targetAudience: "Seafarers designated for Security Duties",
     entryRequirements: "Citizenship Proof + INDoS Number",
@@ -430,7 +430,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 8,
-    courseName: "AFF – Advanced Fire Fighting",
+    courseName: "AFF-008 Advanced Fire Fighting",
     category: "Advanced",
     targetAudience: "Seafarers required to control firefighting operations",
     entryRequirements:
@@ -444,7 +444,8 @@ export const courselist: CourseList[] = [
   },
   {
     id: 9,
-    courseName: "ATCTCO (Advanced Training Chemical Tanker Cargo Operations)",
+    courseName:
+      "ATCTCO-009 (Advanced Training Chemical Tanker Cargo Operations)",
     category: "Advanced",
     targetAudience: "Officers responsible for handling chemical tanker cargo",
     entryRequirements:
@@ -457,7 +458,7 @@ export const courselist: CourseList[] = [
   {
     id: 10,
     courseName:
-      "ATLGTCO (Advanced Training Liquified Gas Tanker Cargo Operations)",
+      "ATLGTCO-010 (Advanced Training Liquified Gas Tanker Cargo Operations)",
     category: "Advanced",
     targetAudience:
       "Masters, Chief Eng., Chief Mates, 2nd Engineers & cargo officers",
@@ -470,7 +471,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 11,
-    courseName: "ATOTCO (Advanced Training Oil Tanker Cargo Operations)",
+    courseName: "ATOTCO-011 (Advanced Training Oil Tanker Cargo Operations)",
     category: "Advanced",
     targetAudience: "Officers handling Oil Tanker cargo",
     entryRequirements:
@@ -482,7 +483,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 12,
-    courseName: "CSO – Company Security Officer",
+    courseName: "CSO–012 Company Security Officer",
     category: "Advanced",
     targetAudience:
       "Officers employed or likely to be Company Security Officers",
@@ -495,7 +496,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 13,
-    courseName: "MC – Master Medical Care",
+    courseName: "MC–-13 Master Medical Care",
     category: "Advanced",
     targetAudience:
       "Masters, Chief Mates & Second Mates responsible for medical care onboard",
@@ -507,7 +508,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 14,
-    courseName: "MFA – Medical First Aid",
+    courseName: "MFA–014 Medical First Aid",
     category: "Advanced",
     targetAudience: "All Seafarers",
     entryRequirements:
@@ -519,7 +520,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 15,
-    courseName: "MR & UT – Master’s Refresher & Updating",
+    courseName: "MR-0015 MR & UT – Master’s Refresher & Updating",
     category: "Advanced",
     targetAudience: "Certificate of Service (Master FG) holders",
     entryRequirements: "CoS Master FG + INDoS",
@@ -530,7 +531,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 16,
-    courseName: "PFSOC – Port Facility Security Officer",
+    courseName: "PFSOC-0016 Port Facility Security Officer",
     category: "Advanced",
     targetAudience: "Personnel employed as PFSO",
     entryRequirements:
@@ -542,7 +543,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 17,
-    courseName: "PSCRB – Proficiency in Survival Craft & Rescue Boat",
+    courseName: "PSCRB-017 Proficiency in Survival Craft & Rescue Boat",
     category: "Advanced",
     targetAudience:
       "Seafarers operating life-saving appliances or taking charge of rescue crafts",
@@ -556,7 +557,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 18,
-    courseName: "SBSOC – Shipboard Safety Officer Course (Value Added)",
+    courseName: "SBSOC–018 Shipboard Safety Officer Course (Value Added)",
     category: "Advanced",
     targetAudience: "Nautical Officers, Engineers, ETOs, Superintendents",
     entryRequirements:
@@ -568,7 +569,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 19,
-    courseName: "SSO – Ship Security Officer",
+    courseName: "SSO–019 Ship Security Officer",
     category: "Advanced",
     targetAudience: "Seafarers designated as SSO",
     entryRequirements:
@@ -580,7 +581,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 20,
-    courseName: "VICT – Vertical Integration Course for Trainers",
+    courseName: "VICT–020 Vertical Integration Course for Trainers",
     category: "Advanced",
     targetAudience:
       "Personnel desiring to be certified as Trainers & Assessors",
@@ -592,7 +593,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 21,
-    courseName: "ARPA – Automatic Radar Plotting Aid",
+    courseName: "ARPA–021 Automatic Radar Plotting Aid",
     category: "Simulator",
     targetAudience: "NWKOs",
     entryRequirements:
@@ -604,7 +605,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 22,
-    courseName: "ECDIS – Electronic Chart Display & Information System",
+    courseName: "ECDIS–022 Electronic Chart Display & Information System",
     category: "Simulator",
     targetAudience: "Navigational watch officers using ECDIS",
     entryRequirements:
@@ -616,7 +617,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 23,
-    courseName: "GMDSS – Global Maritime Distress & Safety System",
+    courseName: "GMDSS–023 Global Maritime Distress & Safety System",
     category: "Simulator",
     targetAudience:
       "Seafarers responsible for radio communication / COC applicants",
@@ -628,7 +629,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 24,
-    courseName: "RANSCO – Radar ARPA Navigation & Simulator Course",
+    courseName: "RANSCO–024 Radar ARPA Navigation & Simulator Course",
     category: "Simulator",
     targetAudience: "2nd Mate COC holders",
     entryRequirements: "ROSC + ARPA + 2nd Mate COC + Citizenship Proof + INDoS",
@@ -639,7 +640,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 25,
-    courseName: "ROSC – Radar Observers Simulator Course",
+    courseName: "ROSC–025 Radar Observers Simulator Course",
     category: "Simulator",
     targetAudience: "Seafarers desiring NWKO certification",
     entryRequirements:
@@ -651,7 +652,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 26,
-    courseName: "SMS – Ship Manoeuvring Simulator",
+    courseName: "SMS–026 Ship Manoeuvring Simulator",
     category: "Simulator",
     targetAudience: "Deck officers at management level",
     entryRequirements:
@@ -663,7 +664,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 27,
-    courseName: "FPFF R – Fire Prevention & Fire Fighting Refresher",
+    courseName: "FPFFR–027 Fire Prevention & Fire Fighting Refresher",
     category: "Refresher",
     targetAudience: "Seafarers with FPFF valid 5 years earlier",
     entryRequirements: "Valid FPFF / FPFF R + Citizenship Proof + INDoS",
@@ -674,7 +675,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 28,
-    courseName: "MC RUT – Medical Care Refresher & Updating Training",
+    courseName: "MCRUT–028 Medical Care Refresher & Updating Training",
     category: "Refresher",
     targetAudience: "Officers holding MC/MC RUT valid 5 years earlier",
     entryRequirements: "Valid MC / MC RUT + Citizenship Proof + INDoS",
@@ -685,7 +686,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 29,
-    courseName: "MFA RUT – Medical First Aid Refresher",
+    courseName: "MFARUT–029 Medical First Aid Refresher",
     category: "Refresher",
     targetAudience: "MFA/MFA RUT holders 5 years old",
     entryRequirements: "Valid MFA / MFA RUT + Citizenship Proof + INDoS",
@@ -696,7 +697,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 30,
-    courseName: "PST R – Personal Survival Techniques Refresher",
+    courseName: "PSTR–030 Personal Survival Techniques Refresher",
     category: "Refresher",
     targetAudience: "PST / PST R holders 5 years old",
     entryRequirements: "Valid PST / PST R + Citizenship Proof + INDoS",
@@ -707,7 +708,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 31,
-    courseName: "AFF R – Advance Fire Fighting Refresher",
+    courseName: "AFFR–031 Advance Fire Fighting Refresher",
     category: "Refresher",
     targetAudience: "Officers holding AFF / AFF R older than 5 years",
     entryRequirements:
@@ -719,7 +720,7 @@ export const courselist: CourseList[] = [
   },
   {
     id: 32,
-    courseName: "PSCRB R – Proficiency in Survival Craft Refresher",
+    courseName: "PSCRBR–032 Proficiency in Survival Craft Refresher",
     category: "Refresher",
     targetAudience: "PSCRB holders",
     entryRequirements: "Valid PSCRB + Citizenship Proof + INDoS",

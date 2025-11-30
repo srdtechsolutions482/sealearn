@@ -9,7 +9,7 @@ import {
 } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Role, Status, Vendor, Course, User } from "../types";
-import { vendors, courses, enrollments, allUsers } from "../data";
+import { vendors, courses, enrollments, allUsers, courselist } from "../data";
 import {
   Card,
   Button,
@@ -39,25 +39,6 @@ import {
 } from "../components/ui";
 import DataTable, { Column } from "../components/DataTable";
 import CourseCard from "../components/CourseCard";
-
-// --- MOCK DATA FOR COURSE NAMES ---
-const courseNameList = [
-  "Advanced Fire Fighting",
-  "Basic Safety Training",
-  "Medical First Aid",
-  "Proficiency in Survival Craft and Rescue Boats",
-  "Security Training for Seafarers with Designated Security Duties",
-  "Global Maritime Distress and Safety System (GMDSS)",
-  "Radar Observer Course",
-  "Automatic Radar Plotting Aids (ARPA)",
-  "Bridge Team Management",
-  "Engine Room Resource Management",
-  "High Voltage Safety and Switch Gear",
-  "Tanker Familiarization",
-  "Ship Security Officer",
-  "Medical Care",
-  "Passenger Ship Crisis Management",
-];
 
 const currencyList = ["INR", "USD", "EUR", "GBP", "AUD", "CAD", "SGD"];
 
@@ -769,6 +750,17 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
   const existingCourse =
     mode !== "create" ? courses.find((c) => c.id === courseId) : undefined;
 
+  // Load distinct categories from courselist
+  const distinctCategories = useMemo(() => {
+    // courselist is expected to be an array of objects
+    const list = Array.isArray(courselist) ? courselist : [];
+    const categories = list.map((c: any) => c.Category || c.category);
+    // Filter out null/undefined and get unique values
+    return Array.from(new Set(categories))
+      .filter((c: any) => typeof c === "string" && c.trim() !== "")
+      .sort() as string[];
+  }, []);
+
   // If we're not creating and can't find the course, show error
   if (mode !== "create" && !existingCourse) {
     return (
@@ -807,8 +799,31 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
     instructor: existingCourse?.instructor || "",
     mode: "Online",
     location: existingCourse?.location || "",
-    courseType: "Beginner",
+    courseType: (existingCourse as any)?.category || "", // Use existing category or empty
   });
+
+  // Now we can define availableCourseTitles correctly depending on formData
+  const filteredCourseTitles = useMemo(() => {
+    let list = Array.isArray(courselist) ? courselist : [];
+
+    // Filter by selected category
+    if (formData.courseType) {
+      list = list.filter((c: any) => {
+        if (typeof c === "string") return false;
+        const cat = c.Category || c.category;
+        return cat === formData.courseType;
+      });
+    }
+
+    const titles = list.map((c: any) => {
+      if (typeof c === "string") return c;
+      return c["Course Name"] || c.courseName || c.title || c.name || "";
+    });
+
+    return Array.from(new Set(titles))
+      .filter((t: any) => typeof t === "string" && t.trim() !== "")
+      .sort() as string[];
+  }, [formData.courseType]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -912,23 +927,6 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">
-                  Course Title <span className="text-red-500">*</span>
-                </label>
-                <SearchableDropdown
-                  options={courseNameList}
-                  value={formData.title}
-                  onChange={(val) => handleInputChange("title", val)}
-                  placeholder="Select Course Title"
-                  readOnly={isReadOnly}
-                  error={!!errors.title}
-                />
-                {errors.title && (
-                  <p className="mt-1 text-xs text-red-500">{errors.title}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">
                   Course Type <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -941,14 +939,45 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
                   } bg-white px-4 py-2 text-text-primary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm`}
                   disabled={isReadOnly}
                 >
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
+                  <option value="">Select Category</option>
+                  {distinctCategories.length > 0 ? (
+                    distinctCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
+                    </>
+                  )}
                 </select>
                 {errors.courseType && (
                   <p className="mt-1 text-xs text-red-500">
                     {errors.courseType}
                   </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">
+                  Course Title <span className="text-red-500">*</span>
+                </label>
+                <SearchableDropdown
+                  options={filteredCourseTitles}
+                  value={formData.title}
+                  onChange={(val) => handleInputChange("title", val)}
+                  placeholder={
+                    formData.courseType
+                      ? "Select Course Title"
+                      : "Select Category First"
+                  }
+                  readOnly={isReadOnly || !formData.courseType}
+                  error={!!errors.title}
+                />
+                {errors.title && (
+                  <p className="mt-1 text-xs text-red-500">{errors.title}</p>
                 )}
               </div>
 
@@ -1210,13 +1239,21 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
                 )}
               </div>
             </div>
-            <Input
-              label="Instructor Name"
-              value={formData.instructor}
-              onChange={(e) => handleInputChange("instructor", e.target.value)}
-              placeholder="e.g., Capt. John Doe"
-              readOnly={isReadOnly}
-            />
+            <div className="relative">
+              <label className="block text-sm font-medium text-text-secondary mb-1">
+                Instructor Name
+              </label>
+              <input
+                type="text"
+                value={formData.instructor}
+                onChange={(e) =>
+                  handleInputChange("instructor", e.target.value)
+                }
+                placeholder="e.g., Capt. John Doe"
+                className="block w-full rounded-md border border-border-color px-4 py-2 text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                readOnly={isReadOnly}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-4">
@@ -1255,15 +1292,34 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
             {mode === "view" ? "Public View" : "Live Preview"}
           </h3>
           <div className="bg-white rounded-xl shadow-md overflow-hidden border border-border-color sticky top-6">
-            <img
-              src={
-                thumbnailPreview ||
-                existingCourse?.imageUrl ||
-                "https://images.unsplash.com/photo-1559024926-751d3b13e873?q=80&w=2070&auto=format&fit=crop"
-              }
-              alt="Preview"
-              className="w-full h-48 object-cover"
-            />
+            {thumbnailPreview ? (
+              <img
+                src={thumbnailPreview}
+                alt="Preview"
+                className="w-full h-48 object-cover"
+              />
+            ) : (
+              <div className="w-full h-48 bg-gray-50 flex flex-col items-center justify-center border-b border-gray-100">
+                <div className="p-3 bg-gray-200 rounded-full mb-2">
+                  <svg
+                    className="w-6 h-6 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <span className="text-sm text-gray-500 font-medium">
+                  No Image Available
+                </span>
+              </div>
+            )}
             <div className="p-5">
               <div className="flex justify-between items-start mb-2">
                 <h4 className="font-bold text-lg text-text-primary leading-tight">
@@ -1274,7 +1330,7 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
                     {formData.mode}
                   </span>
                   <span className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded font-medium">
-                    {formData.courseType}
+                    {formData.courseType || "Category"}
                   </span>
                 </div>
               </div>
