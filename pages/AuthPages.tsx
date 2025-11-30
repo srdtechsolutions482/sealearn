@@ -10,7 +10,6 @@ import {
   TrashIcon,
   LockIcon,
 } from "../components/ui";
-import { Role } from "../types";
 
 const LogoAnchorIcon = () => (
   <svg
@@ -63,6 +62,38 @@ const AuthLayout: React.FC<{
       </div>
     </div>
   </div>
+);
+
+const Header: React.FC = () => (
+  <header className="bg-white border-b border-border-color sticky top-0 z-10">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <Link to="/" className="flex items-center gap-2">
+        <LogoAnchorIcon />
+        <span className="text-lg font-bold text-text-primary">SeaLearn</span>
+      </Link>
+      <Link to="/login">
+        <Button variant="primary" size="sm" className="px-6">
+          Login
+        </Button>
+      </Link>
+    </div>
+  </header>
+);
+
+const Footer: React.FC = () => (
+  <footer className="py-6 text-center text-sm text-text-tertiary">
+    <div className="flex justify-center gap-6 mb-2">
+      <a href="#" className="hover:text-text-secondary">
+        Terms of Service
+      </a>
+      <a href="#" className="hover:text-text-secondary">
+        Privacy Policy
+      </a>
+      <a href="#" className="hover:text-text-secondary">
+        Contact Us
+      </a>
+    </div>
+  </footer>
 );
 
 const LoginPage: React.FC = () => {
@@ -131,7 +162,6 @@ const LoginPage: React.FC = () => {
             required
             icon={<LockIcon className="w-5 h-5" />}
           />
-          {/* Manually positioned right icon (View/Eye) */}
           <button
             type="button"
             className="absolute right-3 top-[34px] text-text-tertiary hover:text-text-primary"
@@ -154,7 +184,6 @@ const LoginPage: React.FC = () => {
                 <line x1="18" y1="6" x2="6" y2="18" />
               </svg>
             ) : (
-              // Normal eye icon (eye open)
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
@@ -199,100 +228,43 @@ const LoginPage: React.FC = () => {
     </AuthLayout>
   );
 };
-const RegisterPage: React.FC = () => {
-  const [role, setRole] = useState<Role.USER | Role.VENDOR>(Role.USER);
 
+const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-secondary flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-border-color sticky top-0 z-10">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <LogoAnchorIcon />
-            <span className="text-lg font-bold text-text-primary">
-              SeaLearn
-            </span>
-          </Link>
-          <Link to="/login">
-            <Button variant="primary" size="sm" className="px-6">
-              Login
-            </Button>
-          </Link>
-        </div>
-      </header>
-
+      <Header />
       <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Role Toggle */}
-        <div className="flex justify-center mb-10">
-          <div className="bg-white p-1 rounded-lg border border-border-color inline-flex shadow-sm">
-            <button
-              onClick={() => setRole(Role.USER)}
-              className={`px-6 py-2 rounded-md transition-all text-sm font-semibold ${
-                role === Role.USER
-                  ? "bg-primary-dark text-white shadow-md"
-                  : "text-text-secondary hover:bg-gray-50"
-              }`}
-            >
-              Seafarer
-            </button>
-            <button
-              onClick={() => setRole(Role.VENDOR)}
-              className={`px-6 py-2 rounded-md transition-all text-sm font-semibold ${
-                role === Role.VENDOR
-                  ? "bg-primary-dark text-white shadow-md"
-                  : "text-text-secondary hover:bg-gray-50"
-              }`}
-            >
-              Maritime Institute
-            </button>
-          </div>
-        </div>
-
-        {role === Role.USER ? (
-          <div className="grid md:grid-cols-2 gap-0 max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden min-h-[600px]">
-            <div className="bg-primary-dark p-12 flex flex-col justify-center text-white relative overflow-hidden">
-              <div className="relative z-10">
-                <h1 className="text-4xl font-bold leading-tight mb-4">
-                  Your Voyage to Certification Starts Here.
-                </h1>
-                <p className="text-gray-300 text-lg">
-                  Access DG Shipping-approved courses and advance your maritime
-                  career with our trusted platform.
-                </p>
-              </div>
-              {/* Subtle background pattern */}
-              <svg
-                className="absolute top-0 left-0 w-full h-full opacity-5"
-                viewBox="0 0 100 100"
-                preserveAspectRatio="none"
-              >
-                <path d="M0 100 C 20 0 50 0 100 100 Z" fill="white" />
-              </svg>
-            </div>
-            <div className="p-10 flex flex-col justify-center">
-              <h2 className="text-3xl font-bold text-text-primary mb-2">
-                Create Your Seafarer Account
-              </h2>
-              <p className="text-text-secondary mb-8">
-                Join thousands of seafarers on their voyage to certification.
-              </p>
-              <UserRegisterForm />
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-10">
-              <h1 className="text-3xl font-extrabold text-text-primary">
-                Register Your Maritime Institute
+        <div className="grid md:grid-cols-2 gap-0 max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden min-h-[600px]">
+          <div className="bg-primary-dark p-12 flex flex-col justify-center text-white relative overflow-hidden">
+            <div className="relative z-10">
+              <h1 className="text-4xl font-bold leading-tight mb-4">
+                Your Voyage to Certification Starts Here.
               </h1>
-              <p className="text-text-secondary mt-2">
-                Join our platform to offer DG Shipping-approved courses to
-                thousands of seafarers.
+              <p className="text-gray-300 text-lg">
+                Access DG Shipping-approved courses and advance your maritime
+                career with our trusted platform.
               </p>
             </div>
-            <VendorRegisterForm />
-            <div className="mt-8 text-center">
-              <p className="text-sm text-text-secondary">
+            {/* Subtle background pattern */}
+            <svg
+              className="absolute top-0 left-0 w-full h-full opacity-5"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+            >
+              <path d="M0 100 C 20 0 50 0 100 100 Z" fill="white" />
+            </svg>
+          </div>
+          <div className="p-10 flex flex-col justify-center">
+            <h2 className="text-3xl font-bold text-text-primary mb-2">
+              Create Your Seafarer Account
+            </h2>
+            <p className="text-text-secondary mb-8">
+              Join thousands of seafarers on their voyage to certification.
+            </p>
+            <UserRegisterForm />
+
+            <div className="mt-6 text-center border-t border-border-color pt-6">
+              <p className="text-sm text-text-secondary mt-2">
                 Already have an account?{" "}
                 <Link
                   to="/login"
@@ -303,22 +275,43 @@ const RegisterPage: React.FC = () => {
               </p>
             </div>
           </div>
-        )}
-      </main>
-
-      <footer className="py-6 text-center text-sm text-text-tertiary">
-        <div className="flex justify-center gap-6 mb-2">
-          <a href="#" className="hover:text-text-secondary">
-            Terms of Service
-          </a>
-          <a href="#" className="hover:text-text-secondary">
-            Privacy Policy
-          </a>
-          <a href="#" className="hover:text-text-secondary">
-            Contact Us
-          </a>
         </div>
-      </footer>
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+const VendorRegisterPage: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-secondary flex flex-col">
+      <Header />
+      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-extrabold text-text-primary">
+              Register Your Maritime Institute
+            </h1>
+            <p className="text-text-secondary mt-2">
+              Join our platform to offer DG Shipping-approved courses to
+              thousands of seafarers.
+            </p>
+          </div>
+          <VendorRegisterForm />
+          <div className="mt-8 text-center">
+            <p className="text-sm text-text-secondary mt-2">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="font-semibold text-primary hover:underline"
+              >
+                Log In
+              </Link>
+            </p>
+          </div>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 };
@@ -387,7 +380,6 @@ const UserRegisterForm: React.FC = () => {
           required
           icon={<LockIcon className="w-5 h-5" />}
         />
-        {/* Manually positioned right icon (View/Eye) */}
         <button
           type="button"
           className="absolute right-3 top-[34px] text-text-tertiary hover:text-text-primary"
@@ -410,7 +402,6 @@ const UserRegisterForm: React.FC = () => {
               <line x1="18" y1="6" x2="6" y2="18" />
             </svg>
           ) : (
-            // Normal eye icon (eye open)
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -445,6 +436,8 @@ const VendorRegisterForm: React.FC = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [isDeclared, setIsDeclared] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [otherCourse, setOtherCourse] = useState("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const COURSE_OPTIONS = [
@@ -460,11 +453,16 @@ const VendorRegisterForm: React.FC = () => {
     "High Voltage Safety (HV)",
     "Dynamic Positioning Induction",
     "Ship Security Officer (SSO)",
+    "Other",
   ];
 
   const toggleCourse = (course: string) => {
     if (selectedCourses.includes(course)) {
       setSelectedCourses((prev) => prev.filter((c) => c !== course));
+      if (course === "Other") {
+        setOtherCourse("");
+        setErrors((prev) => ({ ...prev, otherCourse: "" }));
+      }
     } else {
       setSelectedCourses((prev) => [...prev, course]);
     }
@@ -518,6 +516,10 @@ const VendorRegisterForm: React.FC = () => {
     const requiredFields = [
       { key: "instituteName", label: "Institute Name" },
       { key: "accreditation", label: "Accreditation Number" },
+      { key: "address", label: "Institute Address" },
+      { key: "contactPerson", label: "Contact Person" },
+      { key: "contactMobile", label: "Phone Number" },
+      { key: "contactEmail", label: "Email" },
       { key: "licenseNumber", label: "License Number" },
       { key: "issuingAuthority", label: "Issuing Authority" },
       { key: "validFrom", label: "Vendor Approval Date" },
@@ -530,6 +532,10 @@ const VendorRegisterForm: React.FC = () => {
         newErrors[key] = `${label} is required`;
       }
     });
+
+    if (selectedCourses.includes("Other") && !otherCourse.trim()) {
+      newErrors["otherCourse"] = "Please specify the other course.";
+    }
 
     // Validate Files
     if (files.length === 0) {
@@ -574,6 +580,10 @@ const VendorRegisterForm: React.FC = () => {
       <p className="text-danger text-xs mt-1">{errors[name]}</p>
     ) : null;
   };
+
+  const filteredCourses = COURSE_OPTIONS.filter((option) =>
+    option.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <form className="space-y-8" onSubmit={handleSubmit} noValidate>
@@ -623,13 +633,92 @@ const VendorRegisterForm: React.FC = () => {
             />
             {renderErrorMsg("accreditation")}
           </div>
+          <div className="md:col-span-2">
+            <Textarea
+              label={
+                <span>
+                  Institute Address <span className="text-danger">*</span>
+                </span>
+              }
+              id="address"
+              name="address"
+              placeholder="Enter full physical address"
+              rows={3}
+              className={`w-full ${getInputErrorClass("address")}`}
+              onChange={() => setErrors((prev) => ({ ...prev, address: "" }))}
+            />
+            {renderErrorMsg("address")}
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Details */}
+      <section>
+        <h3 className="text-lg font-bold text-text-primary mb-4 pb-2 border-b border-border-color">
+          Contact Details
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <Input
+              label={
+                <span>
+                  Contact Person <span className="text-danger">*</span>
+                </span>
+              }
+              id="contactPerson"
+              name="contactPerson"
+              placeholder="Enter contact person name"
+              type="text"
+              className={getInputErrorClass("contactPerson")}
+              onChange={() =>
+                setErrors((prev) => ({ ...prev, contactPerson: "" }))
+              }
+            />
+            {renderErrorMsg("contactPerson")}
+          </div>
+          <div>
+            <Input
+              label={
+                <span>
+                  Phone Number <span className="text-danger">*</span>
+                </span>
+              }
+              id="contactMobile"
+              name="contactMobile"
+              placeholder="Enter phone number"
+              type="tel"
+              className={getInputErrorClass("contactMobile")}
+              onChange={() =>
+                setErrors((prev) => ({ ...prev, contactMobile: "" }))
+              }
+            />
+            {renderErrorMsg("contactMobile")}
+          </div>
+          <div className="md:col-span-2">
+            <Input
+              label={
+                <span>
+                  Email <span className="text-danger">*</span>
+                </span>
+              }
+              id="contactEmail"
+              name="contactEmail"
+              placeholder="Enter official email address"
+              type="email"
+              className={getInputErrorClass("contactEmail")}
+              onChange={() =>
+                setErrors((prev) => ({ ...prev, contactEmail: "" }))
+              }
+            />
+            {renderErrorMsg("contactEmail")}
+          </div>
         </div>
       </section>
 
       {/* License & Approval Details */}
       <section>
         <h3 className="text-lg font-bold text-text-primary mb-4 pb-2 border-b border-border-color">
-          License & Approval Details
+          License Details
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -667,38 +756,6 @@ const VendorRegisterForm: React.FC = () => {
               }
             />
             {renderErrorMsg("issuingAuthority")}
-          </div>
-          <div>
-            <Input
-              label={
-                <span>
-                  Vendor Approval Date <span className="text-danger">*</span>
-                </span>
-              }
-              id="validFrom"
-              name="validFrom"
-              type="date"
-              className={getInputErrorClass("validFrom")}
-              onChange={() => setErrors((prev) => ({ ...prev, validFrom: "" }))}
-            />
-            {renderErrorMsg("validFrom")}
-          </div>
-          <div>
-            <Input
-              label={
-                <span>
-                  Valid Until <span className="text-danger">*</span>
-                </span>
-              }
-              id="validUntil"
-              name="validUntil"
-              type="date"
-              className={getInputErrorClass("validUntil")}
-              onChange={() =>
-                setErrors((prev) => ({ ...prev, validUntil: "" }))
-              }
-            />
-            {renderErrorMsg("validUntil")}
           </div>
         </div>
       </section>
@@ -786,54 +843,98 @@ const VendorRegisterForm: React.FC = () => {
                 className="fixed inset-0 z-10"
                 onClick={() => setIsDropdownOpen(false)}
               ></div>
-              <div className="absolute z-20 w-full mt-2 bg-white border border-border-color rounded-lg shadow-xl max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
-                {COURSE_OPTIONS.map((option) => {
-                  const isSelected = selectedCourses.includes(option);
-                  return (
-                    <div
-                      key={option}
-                      className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-gray-50 last:border-0 ${
-                        isSelected ? "bg-primary/5" : "hover:bg-gray-50"
-                      }`}
-                      onClick={() => toggleCourse(option)}
-                    >
-                      <div
-                        className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
-                          isSelected
-                            ? "bg-primary border-primary text-white"
-                            : "border-gray-300 bg-white"
-                        }`}
-                      >
-                        {isSelected && (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+              <div className="absolute z-20 w-full mt-2 bg-white border border-border-color rounded-lg shadow-xl max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-100 flex flex-col">
+                <div
+                  className="p-2 border-b border-gray-100 bg-gray-50 sticky top-0 z-20"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    type="text"
+                    placeholder="Search courses..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-border-color rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                    autoFocus
+                  />
+                </div>
+                <div className="overflow-y-auto">
+                  {filteredCourses.length > 0 ? (
+                    filteredCourses.map((option) => {
+                      const isSelected = selectedCourses.includes(option);
+                      return (
+                        <div
+                          key={option}
+                          className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-gray-50 last:border-0 ${
+                            isSelected ? "bg-primary/5" : "hover:bg-gray-50"
+                          }`}
+                          onClick={() => toggleCourse(option)}
+                        >
+                          <div
+                            className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                              isSelected
+                                ? "bg-primary border-primary text-white"
+                                : "border-gray-300 bg-white"
+                            }`}
                           >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        )}
-                      </div>
-                      <span
-                        className={`text-sm ${
-                          isSelected
-                            ? "text-primary-dark font-medium"
-                            : "text-text-primary"
-                        }`}
-                      >
-                        {option}
-                      </span>
+                            {isSelected && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
+                          </div>
+                          <span
+                            className={`text-sm ${
+                              isSelected
+                                ? "text-primary-dark font-medium"
+                                : "text-text-primary"
+                            }`}
+                          >
+                            {option}
+                          </span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-text-tertiary text-center">
+                      No courses found
                     </div>
-                  );
-                })}
+                  )}
+                </div>
               </div>
             </>
+          )}
+
+          {/* Other Course Input */}
+          {selectedCourses.includes("Other") && (
+            <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <Input
+                label={
+                  <span>
+                    Specify Other Course <span className="text-danger">*</span>
+                  </span>
+                }
+                id="otherCourse"
+                value={otherCourse}
+                onChange={(e) => {
+                  setOtherCourse(e.target.value);
+                  setErrors((prev) => ({ ...prev, otherCourse: "" }));
+                }}
+                placeholder="Enter the name of the new course"
+                className={getInputErrorClass("otherCourse")}
+                required
+              />
+              {renderErrorMsg("otherCourse")}
+            </div>
           )}
         </div>
       </section>
@@ -972,8 +1073,16 @@ const VendorRegisterForm: React.FC = () => {
 const AuthPages: React.FC = () => {
   const location = useLocation();
 
-  // Auth pages now have their own layout, so we don't need a wrapper
-  return location.pathname === "/login" ? <LoginPage /> : <RegisterPage />;
+  if (location.pathname === "/login") {
+    return <LoginPage />;
+  }
+
+  if (location.pathname === "/register-vendor") {
+    return <VendorRegisterPage />;
+  }
+
+  // Default to User Registration for /register
+  return <RegisterPage />;
 };
 
 export default AuthPages;

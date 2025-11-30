@@ -883,6 +883,10 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
     }
   };
 
+  const priceNum = parseFloat(formData.price.toString()) || 0;
+  const platformFee = priceNum * 0.2;
+  const vendorRevenue = priceNum - platformFee;
+
   return (
     <div key={courseId}>
       {" "}
@@ -1300,13 +1304,33 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
                     : "DD MMM"}
                 </div>
               </div>
-              <div className="flex justify-between items-center pt-4 border-t border-border-color">
-                <span className="text-xl font-bold text-primary-dark">
-                  {formData.currency} {formData.price || "7500"}
-                </span>
-                <span className="text-sm font-medium text-primary cursor-pointer">
-                  View Details
-                </span>
+              <div className="pt-4 border-t border-border-color">
+                <div className="flex justify-between items-center">
+                  <span className="text-xl font-bold text-primary-dark">
+                    {formData.currency} {formData.price || "7500"}
+                  </span>
+                  <span className="text-sm font-medium text-primary cursor-pointer">
+                    View Details
+                  </span>
+                </div>
+                {/* Breakdown Display */}
+                <div className="mt-3 pt-2 border-t border-dashed border-gray-200">
+                  <p className="text-[10px] uppercase text-text-tertiary font-bold mb-1">
+                    Fee Breakdown
+                  </p>
+                  <div className="flex justify-between text-xs text-text-secondary mb-1">
+                    <span>Site Owner (20%)</span>
+                    <span>
+                      {formData.currency} {platformFee.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs font-bold text-green-600">
+                    <span>Institute Revenue (80%)</span>
+                    <span>
+                      {formData.currency} {vendorRevenue.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
