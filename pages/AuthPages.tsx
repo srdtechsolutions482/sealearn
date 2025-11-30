@@ -97,6 +97,94 @@ const Footer: React.FC = () => (
   </footer>
 );
 
+const ForgotPasswordPage: React.FC = () => {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simulate API call
+    setTimeout(() => {
+      setSubmitted(true);
+    }, 1000);
+  };
+
+  return (
+    <AuthLayout
+      title="Reset Password"
+      subtitle="Enter the email address associated with your account and we'll send you a link to reset your password."
+    >
+      {submitted ? (
+        <div className="text-center animate-in fade-in zoom-in duration-300">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
+            <svg
+              className="h-8 w-8 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-text-primary mb-2">
+            Check your mail
+          </h3>
+          <p className="text-text-secondary mb-8">
+            We have sent password recovery instructions to your email.
+          </p>
+          <Link to="/login">
+            <Button variant="primary-dark" className="w-full !py-3">
+              Back to Login
+            </Button>
+          </Link>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Input
+            label="Email Address"
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="admin@test.com"
+            icon={
+              <svg
+                className="w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            }
+            required
+          />
+          <Button
+            type="submit"
+            variant="primary-dark"
+            className="w-full !py-3 !text-base mt-2"
+          >
+            Send Reset Link
+          </Button>
+          <div className="text-center mt-4">
+            <Link
+              to="/login"
+              className="text-sm font-medium text-text-secondary hover:text-primary transition-colors"
+            >
+              <span aria-hidden="true">←</span> Back to Login
+            </Link>
+          </div>
+        </form>
+      )}
+    </AuthLayout>
+  );
+};
+
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -203,9 +291,12 @@ const LoginPage: React.FC = () => {
           </button>
         </div>
         <div className="flex justify-between items-center text-sm mt-1">
-          <a href="#" className="text-accent-orange hover:underline ml-auto">
+          <Link
+            to="/forgot-password"
+            className="text-accent-orange hover:underline ml-auto"
+          >
             Forgot Password?
-          </a>
+          </Link>
         </div>
         <Button
           type="submit"
@@ -1080,6 +1171,10 @@ const AuthPages: React.FC = () => {
 
   if (location.pathname === "/register-vendor") {
     return <VendorRegisterPage />;
+  }
+
+  if (location.pathname === "/forgot-password") {
+    return <ForgotPasswordPage />;
   }
 
   // Default to User Registration for /register

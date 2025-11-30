@@ -22,6 +22,7 @@ function App() {
           <Route path="/login" element={<AuthPages />} />
           <Route path="/register" element={<AuthPages />} />
           <Route path="/register-vendor" element={<AuthPages />} />
+          <Route path="/forgot-password" element={<AuthPages />} />
 
           {/* Public and Dashboard pages use the MainLayout */}
           <Route element={<MainLayout />}>
