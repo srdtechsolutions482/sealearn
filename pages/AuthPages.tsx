@@ -10,6 +10,7 @@ import {
   TrashIcon,
   LockIcon,
 } from "../components/ui";
+import containership from "../assets/ContainerShip.jpg";
 
 const LogoAnchorIcon = () => (
   <svg
@@ -39,7 +40,7 @@ const AuthLayout: React.FC<{
     <div className="grid md:grid-cols-2 max-w-5xl w-full bg-white shadow-2xl rounded-2xl overflow-hidden min-h-[600px]">
       <div className="hidden md:block relative">
         <img
-          src="https://images.unsplash.com/photo-1505245996537-495777280bdc?q=80&w=1974&auto=format&fit=crop"
+          src={containership}
           alt="Container Ship"
           className="w-full h-full object-cover"
         />
@@ -290,7 +291,7 @@ const VendorRegisterPage: React.FC = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <h1 className="text-3xl font-extrabold text-text-primary">
-              Register Your Maritime Institute
+              Register Your Institute
             </h1>
             <p className="text-text-secondary mt-2">
               Join our platform to offer DG Shipping-approved courses to
