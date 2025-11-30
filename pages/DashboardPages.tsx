@@ -347,24 +347,9 @@ const UserProfileView: React.FC = () => {
                   className="w-full h-full rounded-full object-cover"
                 />
               </div>
-              <button className="absolute bottom-0 right-0 bg-primary-dark text-white p-2 rounded-full hover:bg-primary transition-colors">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </button>
             </div>
             <h3 className="text-xl font-bold text-text-primary">{user.name}</h3>
             <p className="text-text-secondary">{user.rank}</p>
-
-            <Button variant="primary-dark" className="mt-6 w-full py-3">
-              Edit Profile
-            </Button>
           </div>
         </div>
 
@@ -415,9 +400,6 @@ const UserProfileView: React.FC = () => {
               <h3 className="text-lg font-bold text-text-primary">
                 My Certificates
               </h3>
-              <Button variant="primary">
-                <PlusIcon className="w-4 h-4" /> Upload New
-              </Button>
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-secondary rounded-lg border border-border-color">
@@ -445,12 +427,6 @@ const UserProfileView: React.FC = () => {
                       <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                   </button>
-                  <button className="p-2 hover:text-primary">
-                    <EditIcon />
-                  </button>
-                  <button className="p-2 hover:text-danger">
-                    <TrashIcon />
-                  </button>
                 </div>
               </div>
               <div className="flex items-center justify-between p-4 bg-secondary rounded-lg border border-border-color">
@@ -477,12 +453,6 @@ const UserProfileView: React.FC = () => {
                     >
                       <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                  </button>
-                  <button className="p-2 hover:text-primary">
-                    <EditIcon />
-                  </button>
-                  <button className="p-2 hover:text-danger">
-                    <TrashIcon />
                   </button>
                 </div>
               </div>
@@ -584,8 +554,20 @@ const VendorDashboardView: React.FC = () => {
               accessor: (c) => <StatusBadge status={c.status} />,
             },
             {
-              header: "ENROLLMENTS",
-              accessor: (c) => Math.floor(Math.random() * 200),
+              header: "ENROLLED SEAFARER",
+              accessor: (c) => {
+                const count = enrollments.filter(
+                  (e) => e.courseId === c.id
+                ).length;
+                return (
+                  <Link
+                    to={`students?courseId=${c.id}`}
+                    className="text-primary font-bold hover:underline"
+                  >
+                    {count}
+                  </Link>
+                );
+              },
             },
             {
               header: "",
@@ -601,6 +583,338 @@ const VendorDashboardView: React.FC = () => {
           ]}
           data={vendorCourses}
         />
+      </Card>
+    </div>
+  );
+};
+
+const StudentEnrollmentView: React.FC = () => {
+  const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryParams = new URLSearchParams(location.search);
+  const filterCourseId = queryParams.get("courseId") || "all";
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCourseId, setSelectedCourseId] = useState(filterCourseId);
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "asc" | "desc";
+  }>({ key: "bookedDate", direction: "desc" });
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setSelectedCourseId(filterCourseId);
+  }, [filterCourseId]);
+
+  // Get Vendor Courses for dropdown
+  const vendorCourses = useMemo(() => {
+    if (!user || user.role !== Role.VENDOR) return [];
+    return courses.filter((c) => c.instituteId === user.id);
+  }, [user]);
+
+  // Handle Dropdown Change
+  const handleCourseFilterChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const newCourseId = e.target.value;
+    setSelectedCourseId(newCourseId);
+    setCurrentPage(1);
+    navigate(`?courseId=${newCourseId}`, { replace: true });
+  };
+
+  // 1. Prepare Data
+  const rawData = useMemo(() => {
+    if (!user || user.role !== Role.VENDOR) return [];
+
+    let filteredEnrollments = enrollments;
+
+    // Filter by Course (Dropdown Logic)
+    if (selectedCourseId !== "all") {
+      filteredEnrollments = filteredEnrollments.filter(
+        (e) => e.courseId === selectedCourseId
+      );
+    } else {
+      // If "all", still only show courses belonging to this vendor
+      const vendorCourseIds = vendorCourses.map((c) => c.id);
+      filteredEnrollments = filteredEnrollments.filter((e) =>
+        vendorCourseIds.includes(e.courseId)
+      );
+    }
+
+    return filteredEnrollments.map((e) => {
+      const student = allUsers.find((u) => u.id === e.userId);
+      const course = courses.find((c) => c.id === e.courseId);
+      const date =
+        (e as any).enrollmentDate ||
+        new Date(
+          Date.now() - Math.floor(Math.random() * 10000000000)
+        ).toISOString();
+
+      return {
+        id: e.id || `${e.userId}-${e.courseId}`,
+        seafarerName: student?.name || "Unknown User",
+        courseName: course?.title || "Unknown Course",
+        bookedDate: date,
+      };
+    });
+  }, [selectedCourseId, user, vendorCourses]);
+
+  // 2. Filter & Sort
+  const processedData = useMemo(() => {
+    let data = [...rawData];
+
+    // Search
+    if (searchTerm) {
+      const lowerTerm = searchTerm.toLowerCase();
+      data = data.filter((item) =>
+        item.seafarerName.toLowerCase().includes(lowerTerm)
+      );
+    }
+
+    // Sort
+    data.sort((a, b) => {
+      const aValue = a[sortConfig.key as keyof typeof a];
+      const bValue = b[sortConfig.key as keyof typeof b];
+
+      if (aValue < bValue) {
+        return sortConfig.direction === "asc" ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+
+    return data;
+  }, [rawData, searchTerm, sortConfig]);
+
+  // 3. Pagination
+  const totalPages = Math.ceil(processedData.length / pageSize);
+  const currentData = processedData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handleSort = (key: string) => {
+    setSortConfig((current) => ({
+      key,
+      direction:
+        current.key === key && current.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const getSortIndicator = (key: string) => {
+    if (sortConfig.key !== key) return null;
+    return sortConfig.direction === "asc" ? " ↑" : " ↓";
+  };
+
+  return (
+    <div>
+      <DashboardHeader
+        title="Enrolled Seafarers"
+        subtitle="View and manage all seafarers enrolled in your institute's courses."
+      >
+        <Button variant="secondary" onClick={() => navigate(-1)}>
+          <ChevronLeftIcon className="w-4 h-4 mr-1" /> Back
+        </Button>
+      </DashboardHeader>
+
+      <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-center">
+        <div className="relative flex-1 w-full max-w-lg">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg
+              className="h-5 w-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary sm:text-sm shadow-sm"
+            placeholder="Search by Name..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+        <div className="w-full md:w-64">
+          <select
+            className="block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-lg shadow-sm border"
+            value={selectedCourseId}
+            onChange={handleCourseFilterChange}
+          >
+            <option value="all">All Courses</option>
+            {vendorCourses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <Card className="!p-0 border shadow-sm overflow-hidden">
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th
+                  scope="col"
+                  className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("seafarerName")}
+                >
+                  SEAFARER NAME {getSortIndicator("seafarerName")}
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("courseName")}
+                >
+                  ENROLLED COURSES {getSortIndicator("courseName")}
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("bookedDate")}
+                >
+                  BOOKED DATE {getSortIndicator("bookedDate")}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentData.length > 0 ? (
+                currentData.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-primary cursor-pointer hover:underline">
+                        {item.seafarerName}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                        {item.courseName}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                      {new Date(item.bookedDate).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={3}
+                    className="px-6 py-12 text-center text-sm text-text-tertiary"
+                  >
+                    No seafarers found matching your criteria.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-4 py-3 border-t border-border-color flex items-center justify-between bg-gray-50">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <Button
+                variant="secondary"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Showing{" "}
+                  <span className="font-medium">
+                    {(currentPage - 1) * pageSize + 1}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-medium">
+                    {Math.min(currentPage * pageSize, processedData.length)}
+                  </span>{" "}
+                  of <span className="font-medium">{processedData.length}</span>{" "}
+                  results
+                </p>
+              </div>
+              <div>
+                <nav
+                  className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                  aria-label="Pagination"
+                >
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                      currentPage === 1
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="sr-only">Previous</span>
+                    <ChevronLeftIcon className="h-5 w-5" />
+                  </button>
+                  {Array.from({ length: totalPages }).map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentPage(idx + 1)}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        currentPage === idx + 1
+                          ? "z-10 bg-blue-50 border-primary text-primary"
+                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                      }`}
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                      currentPage === totalPages
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="sr-only">Next</span>
+                    <ChevronRightIcon className="h-5 w-5" />
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
@@ -1239,21 +1553,13 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
                 )}
               </div>
             </div>
-            <div className="relative">
-              <label className="block text-sm font-medium text-text-secondary mb-1">
-                Instructor Name
-              </label>
-              <input
-                type="text"
-                value={formData.instructor}
-                onChange={(e) =>
-                  handleInputChange("instructor", e.target.value)
-                }
-                placeholder="e.g., Capt. John Doe"
-                className="block w-full rounded-md border border-border-color px-4 py-2 text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
-                readOnly={isReadOnly}
-              />
-            </div>
+            <Input
+              label="Instructor Name"
+              value={formData.instructor}
+              onChange={(e) => handleInputChange("instructor", e.target.value)}
+              placeholder="e.g., Capt. John Doe"
+              readOnly={isReadOnly}
+            />
           </div>
 
           <div className="flex justify-end gap-4">
@@ -1526,6 +1832,7 @@ const DashboardPages: React.FC = () => {
       <Route index element={<DashboardHome />} />
       <Route path="profile" element={<UserProfileView />} />
       <Route path="courses" element={<VendorCourseManagementView />} />
+      <Route path="students" element={<StudentEnrollmentView />} />
       <Route
         path="courses/new"
         element={<VendorCourseEditor mode="create" />}

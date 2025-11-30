@@ -183,7 +183,7 @@ const navItems = {
     { name: "Dashboard", href: "/dashboard", icon: DashboardIcon },
     { name: "Manage Courses", href: "/dashboard/courses", icon: CoursesIcon },
     {
-      name: "Student Enquiries",
+      name: "Enrolled Seafarer",
       href: "/dashboard/students",
       icon: StudentsIcon,
     },
