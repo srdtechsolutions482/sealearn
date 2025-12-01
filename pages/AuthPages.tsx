@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -389,7 +389,9 @@ const VendorRegisterPage: React.FC = () => {
               thousands of seafarers.
             </p>
           </div>
-          <VendorRegisterForm />
+          <div className="bg-white rounded-xl shadow-lg p-8 border border-border-color">
+            <VendorRegisterForm />
+          </div>
           <div className="mt-8 text-center">
             <p className="text-sm text-text-secondary mt-2">
               Already have an account?{" "}
@@ -611,11 +613,10 @@ const VendorRegisterForm: React.FC = () => {
       { key: "address", label: "Institute Address" },
       { key: "contactPerson", label: "Contact Person" },
       { key: "contactMobile", label: "Phone Number" },
+      { key: "customerCare", label: "Customer Care Number" },
       { key: "contactEmail", label: "Email" },
       { key: "licenseNumber", label: "License Number" },
       { key: "issuingAuthority", label: "Issuing Authority" },
-      { key: "validFrom", label: "Vendor Approval Date" },
-      { key: "validUntil", label: "Valid Until Date" },
     ];
 
     requiredFields.forEach(({ key, label }) => {
@@ -786,7 +787,25 @@ const VendorRegisterForm: React.FC = () => {
             />
             {renderErrorMsg("contactMobile")}
           </div>
-          <div className="md:col-span-2">
+          <div>
+            <Input
+              label={
+                <span>
+                  Customer Care Number <span className="text-danger">*</span>
+                </span>
+              }
+              id="customerCare"
+              name="customerCare"
+              placeholder="Enter customer care number"
+              type="tel"
+              className={getInputErrorClass("customerCare")}
+              onChange={() =>
+                setErrors((prev) => ({ ...prev, customerCare: "" }))
+              }
+            />
+            {renderErrorMsg("customerCare")}
+          </div>
+          <div>
             <Input
               label={
                 <span>

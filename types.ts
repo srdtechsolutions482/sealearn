@@ -51,7 +51,8 @@ export interface Course {
   duration: string; // e.g., "5 days"
   fee: number;
   location: string;
-  type: "Online" | "Offline";
+  type: string;
+  mode: string;
   // FIX: Added Status.APPROVED to allow courses to have this status.
   status:
     | Status.ACTIVE

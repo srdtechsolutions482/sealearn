@@ -739,7 +739,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
       {status === Status.PENDING ? (
         <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
       ) : null}
-      {status}
+      {/* {status} */}
     </span>
   );
 };

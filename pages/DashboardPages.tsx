@@ -380,7 +380,6 @@ const UserProfileView: React.FC = () => {
                   <p className="font-medium text-text-primary text-lg">
                     {user.email}
                   </p>
-                  {/* <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircleIcon className="w-3 h-3"/> Verified</span> */}
                   <StatusBadge status={Status.VERIFIED} />
                 </div>
               </div>
@@ -478,11 +477,114 @@ const VendorDashboardView: React.FC = () => {
   const rejectedCount = vendorCourses.filter(
     (c) => c.status === Status.REJECTED
   ).length;
+  const pendingCount = vendorCourses.filter(
+    (c) => c.status === Status.PENDING
+  ).length;
+
+  // --- Analytical Data ---
+  const pieData = [
+    { name: "Approved", value: approvedCount, color: "#10B981" },
+    { name: "Rejected", value: rejectedCount, color: "#EF4444" },
+    { name: "Pending", value: pendingCount, color: "#F59E0B" },
+  ].filter((d) => d.value > 0);
+
+  // Calculate Gradient for Pie Chart
+  const total = approvedCount + rejectedCount + pendingCount;
+  let currentAngle = 0;
+  const gradientSegments = pieData
+    .map((d) => {
+      const percentage = (d.value / total) * 100;
+      const endAngle = currentAngle + percentage;
+      const segment = `${d.color} ${currentAngle}% ${endAngle}%`;
+      currentAngle = endAngle;
+      return segment;
+    })
+    .join(", ");
+
+  const conicGradient =
+    total > 0 ? `conic-gradient(${gradientSegments})` : "none";
+
+  const barData = vendorCourses
+    .map((c) => ({
+      name: c.title.length > 20 ? c.title.substring(0, 20) + "..." : c.title,
+      fullTitle: c.title,
+      students: enrollments.filter((e) => e.courseId === c.id).length,
+    }))
+    .sort((a, b) => b.students - a.students)
+    .slice(0, 5);
+
+  const maxStudents = Math.max(...barData.map((d) => d.students), 1);
+
+  // --- Search, Sort, Pagination Logic for "My Courses" ---
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "asc" | "desc";
+  } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+
+  const getStudentCount = (courseId: string) =>
+    enrollments.filter((e) => e.courseId === courseId).length;
+
+  const processedCourses = useMemo(() => {
+    let data = [...vendorCourses];
+
+    // Search
+    if (searchTerm) {
+      const lowerTerm = searchTerm.toLowerCase();
+      data = data.filter(
+        (c) =>
+          c.title.toLowerCase().includes(lowerTerm) ||
+          c.courseCode.toLowerCase().includes(lowerTerm)
+      );
+    }
+
+    // Sort
+    if (sortConfig) {
+      data.sort((a, b) => {
+        let aVal: any = a[sortConfig.key as keyof Course];
+        let bVal: any = b[sortConfig.key as keyof Course];
+
+        if (sortConfig.key === "students") {
+          aVal = getStudentCount(a.id);
+          bVal = getStudentCount(b.id);
+        }
+
+        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return data;
+  }, [vendorCourses, searchTerm, sortConfig]);
+
+  const totalPages = Math.ceil(processedCourses.length / pageSize);
+  const currentCourses = processedCourses.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handleSort = (key: string) => {
+    setSortConfig((current) => ({
+      key,
+      direction:
+        current?.key === key && current.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const getSortIndicator = (key: string) => {
+    if (sortConfig?.key !== key) return null;
+    return sortConfig.direction === "asc" ? " ↑" : " ↓";
+  };
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-
+      <DashboardHeader
+        title={`Admin Dashboard`}
+        subtitle="Overview of system performance and pending actions."
+      />
       {vendor.status === Status.PENDING && (
         <div className="bg-warning-bg border border-warning text-yellow-800 p-4 rounded-xl mb-8 flex justify-between items-center shadow-sm">
           <div className="flex items-center gap-4">
@@ -514,20 +616,6 @@ const VendorDashboardView: React.FC = () => {
 
       <div className="grid md:grid-cols-4 gap-6 mb-10">
         <StatCard
-          title="Status"
-          value={
-            <div className="flex items-center gap-2">
-              <span
-                className={`w-3 h-3 rounded-full ${
-                  vendor.status === Status.PENDING ? "bg-warning" : "bg-success"
-                }`}
-              ></span>
-              {vendor.status}
-            </div>
-          }
-          className="p-6"
-        />
-        <StatCard
           title="Total Courses"
           value={vendorCourses.length}
           className="p-6"
@@ -538,51 +626,329 @@ const VendorDashboardView: React.FC = () => {
           className="p-6"
         />
         <StatCard
+          title="Pending Courses"
+          value={pendingCount}
+          className="p-6"
+        />
+        <StatCard
           title="Rejected Courses"
           value={rejectedCount}
           className="p-6"
         />
       </div>
 
-      <h2 className="text-2xl font-bold text-text-primary mb-4">My Courses</h2>
+      {/* Analytics Charts */}
+      <div className="grid lg:grid-cols-2 gap-6 mb-10">
+        <Card className="p-6 shadow-sm border border-border-color flex flex-col">
+          <h3 className="text-lg font-bold text-text-primary mb-4">
+            Course Status Distribution
+          </h3>
+          <div className="h-64 w-full flex flex-col items-center justify-center">
+            {pieData.length > 0 ? (
+              <>
+                <div
+                  className="w-48 h-48 rounded-full shadow-inner"
+                  style={{ background: conicGradient }}
+                />
+                <div className="flex flex-wrap gap-4 mt-6 justify-center">
+                  {pieData.map((d) => (
+                    <div
+                      key={d.name}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <span
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: d.color }}
+                      ></span>
+                      <span className="text-text-primary font-medium">
+                        {d.name} ({d.value})
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="h-full flex items-center justify-center text-text-tertiary">
+                No course data available
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <Card className="p-6 shadow-sm border border-border-color flex flex-col">
+          <h3 className="text-lg font-bold text-text-primary mb-4">
+            Top 5 Popular Courses
+          </h3>
+          <div className="h-64 w-full overflow-y-auto pr-2 custom-scrollbar">
+            {barData.length > 0 && barData.some((d) => d.students > 0) ? (
+              <div className="flex flex-col space-y-4 pt-1">
+                {barData.map((course) => (
+                  <div key={course.name} className="w-full group">
+                    <div className="flex justify-between text-sm mb-1.5">
+                      <span
+                        className="font-medium text-text-primary truncate pr-2"
+                        title={course.fullTitle}
+                      >
+                        {course.name}
+                      </span>
+                      <span className="text-text-secondary text-xs">
+                        {course.students} students
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                      <div
+                        className="bg-blue-500 h-3 rounded-full transition-all duration-700 ease-out group-hover:bg-blue-600"
+                        style={{
+                          width: `${(course.students / maxStudents) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-full flex items-center justify-center text-text-tertiary">
+                No enrollment data available
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold text-text-primary">My Courses</h2>
+        <div className="relative w-64">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg
+              className="h-4 w-4 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary"
+            placeholder="Search courses..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+      </div>
+
       <Card className="!p-0 overflow-hidden border-0 shadow-sm">
-        <DataTable
-          columns={[
-            { header: "COURSE NAME", accessor: "title" },
-            {
-              header: "STATUS",
-              accessor: (c) => <StatusBadge status={c.status} />,
-            },
-            {
-              header: "ENROLLED SEAFARER",
-              accessor: (c) => {
-                const count = enrollments.filter(
-                  (e) => e.courseId === c.id
-                ).length;
-                return (
-                  <Link
-                    to={`students?courseId=${c.id}`}
-                    className="text-primary font-bold hover:underline"
-                  >
-                    {count}
-                  </Link>
-                );
-              },
-            },
-            {
-              header: "",
-              accessor: (c) => (
-                <button
-                  onClick={() => navigate(`courses/${c.id}`)}
-                  className="text-primary font-medium hover:underline"
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("title")}
                 >
-                  Manage
-                </button>
-              ),
-            },
-          ]}
-          data={vendorCourses}
-        />
+                  COURSE NAME {getSortIndicator("title")}
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("courseCode")}
+                >
+                  COURSE CODE {getSortIndicator("courseCode")}
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("type")}
+                >
+                  COURSE TYPE {getSortIndicator("type")}
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("mode")}
+                >
+                  MODE {getSortIndicator("mode")}
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("status")}
+                >
+                  STATUS {getSortIndicator("status")}
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("students")}
+                >
+                  ENROLLED SEAFARER {getSortIndicator("students")}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  ACTION
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentCourses.length > 0 ? (
+                currentCourses.map((c) => {
+                  const count = getStudentCount(c.id);
+                  return (
+                    <tr
+                      key={c.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text-primary">
+                        {c.title}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                        {c.courseCode}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                        {c.type}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            c.mode === "Online"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-purple-100 text-purple-800"
+                          }`}
+                        >
+                          {c.mode}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <StatusBadge status={c.status} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Link
+                          to={`students?courseId=${c.id}`}
+                          className="text-primary font-bold hover:underline"
+                        >
+                          {count} Seafarers
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                        <div className="flex items-center space-x-3">
+                          <button
+                            onClick={() => navigate(`${c.id}/edit`)}
+                            className="hover:text-primary transition-colors"
+                            title="Edit Course"
+                          >
+                            <EditIcon />
+                          </button>
+                          <button
+                            onClick={() => navigate(`${c.id}`)}
+                            className="hover:text-primary transition-colors"
+                            title="View Details"
+                          >
+                            <ViewIcon />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-sm text-text-tertiary"
+                  >
+                    No courses found matching your search.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        {/* Pagination logic remains the same */}
+        {totalPages > 1 && (
+          <div className="px-4 py-3 border-t border-border-color flex items-center justify-between bg-gray-50">
+            {/* ... pagination buttons ... */}
+            <div className="flex-1 flex justify-between sm:hidden">
+              <Button
+                variant="secondary"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Showing{" "}
+                  <span className="font-medium">
+                    {(currentPage - 1) * pageSize + 1}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-medium">
+                    {Math.min(currentPage * pageSize, processedCourses.length)}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium">{processedCourses.length}</span>{" "}
+                  results
+                </p>
+              </div>
+              <div>
+                <nav
+                  className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                  aria-label="Pagination"
+                >
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                      currentPage === 1
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="sr-only">Previous</span>
+                    <ChevronLeftIcon className="h-5 w-5" />
+                  </button>
+                  {Array.from({ length: totalPages }).map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentPage(idx + 1)}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        currentPage === idx + 1
+                          ? "z-10 bg-blue-50 border-primary text-primary"
+                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                      }`}
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                      currentPage === totalPages
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="sr-only">Next</span>
+                    <ChevronRightIcon className="h-5 w-5" />
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
@@ -646,17 +1012,18 @@ const StudentEnrollmentView: React.FC = () => {
     return filteredEnrollments.map((e) => {
       const student = allUsers.find((u) => u.id === e.userId);
       const course = courses.find((c) => c.id === e.courseId);
+      // Mock date if missing or use existing
       const date =
-        (e as any).enrollmentDate ||
-        new Date(
-          Date.now() - Math.floor(Math.random() * 10000000000)
-        ).toISOString();
+        (e as any).enrollmentDate || new Date().toISOString().split("T")[0];
 
       return {
         id: e.id || `${e.userId}-${e.courseId}`,
         seafarerName: student?.name || "Unknown User",
+        seafarerEmail: student?.email || "N/A",
+        seafarerRank: student?.rank || "N/A",
         courseName: course?.title || "Unknown Course",
         bookedDate: date,
+        status: e.status,
       };
     });
   }, [selectedCourseId, user, vendorCourses]);
@@ -710,13 +1077,15 @@ const StudentEnrollmentView: React.FC = () => {
     return sortConfig.direction === "asc" ? " ↑" : " ↓";
   };
 
+  if (!user || user.role !== Role.VENDOR) return null;
+
   return (
     <div>
       <DashboardHeader
         title="Enrolled Seafarers"
         subtitle="View and manage all seafarers enrolled in your institute's courses."
       >
-        <Button variant="secondary" onClick={() => navigate(-1)}>
+        <Button variant="secondary" onClick={() => navigate("/dashboard")}>
           <ChevronLeftIcon className="w-4 h-4 mr-1" /> Back
         </Button>
       </DashboardHeader>
@@ -779,7 +1148,7 @@ const StudentEnrollmentView: React.FC = () => {
                   className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                   onClick={() => handleSort("courseName")}
                 >
-                  ENROLLED COURSES {getSortIndicator("courseName")}
+                  ENROLLED COURSE {getSortIndicator("courseName")}
                 </th>
                 <th
                   scope="col"
@@ -798,8 +1167,13 @@ const StudentEnrollmentView: React.FC = () => {
                     className="hover:bg-gray-50 transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-primary cursor-pointer hover:underline">
-                        {item.seafarerName}
+                      <div className="flex items-center">
+                        <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 mr-3">
+                          {item.seafarerName.charAt(0)}
+                        </div>
+                        <div className="text-sm font-medium text-text-primary">
+                          {item.seafarerName}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -829,8 +1203,7 @@ const StudentEnrollmentView: React.FC = () => {
             </tbody>
           </table>
         </div>
-
-        {/* Pagination */}
+        {/* Pagination Logic */}
         {totalPages > 1 && (
           <div className="px-4 py-3 border-t border-border-color flex items-center justify-between bg-gray-50">
             <div className="flex-1 flex justify-between sm:hidden">
@@ -927,56 +1300,77 @@ const VendorCourseManagementView: React.FC = () => {
   // State for filtering
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"ALL" | Status>("ALL");
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "asc" | "desc";
+  } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   if (!user || user.role !== Role.VENDOR) return null; // Guard
 
-  // Filter Data
-  const filteredCourses = useMemo(() => {
-    return courses
-      .filter((c) => c.instituteId === user.id)
-      .filter((course) => {
-        const matchesSearch =
-          course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          course.courseCode.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus =
-          filterStatus === "ALL" || course.status === filterStatus;
-        return matchesSearch && matchesStatus;
-      });
-  }, [user.id, searchTerm, filterStatus]);
+  const getStudentCount = (courseId: string) =>
+    enrollments.filter((e) => e.courseId === courseId).length;
 
-  const columns: Column<Course>[] = [
-    { header: "COURSE ID", accessor: "courseCode" },
-    { header: "COURSE TITLE", accessor: "title" },
-    {
-      header: "STATUS",
-      accessor: (item) => <StatusBadge status={item.status} />,
-    },
-    {
-      header: "FEES",
-      accessor: (item) => `₹${item.fee.toLocaleString("en-IN")}`,
-    },
-    {
-      header: "ACTIONS",
-      accessor: (course) => (
-        <div className="flex items-center space-x-3 text-text-secondary">
-          <button
-            onClick={() => navigate(`${course.id}/edit`)}
-            className="hover:text-primary transition-colors"
-            title="Edit Course"
-          >
-            <EditIcon />
-          </button>
-          <button
-            onClick={() => navigate(`${course.id}`)}
-            className="hover:text-primary transition-colors"
-            title="View Details"
-          >
-            <ViewIcon />
-          </button>
-        </div>
-      ),
-    },
-  ];
+  // Filter Data
+  const processedCourses = useMemo(() => {
+    let data = courses.filter((c) => c.instituteId === user.id);
+
+    // Filter by Search
+    if (searchTerm) {
+      const lowerTerm = searchTerm.toLowerCase();
+      data = data.filter(
+        (c) =>
+          c.title.toLowerCase().includes(lowerTerm) ||
+          c.courseCode.toLowerCase().includes(lowerTerm) ||
+          c.type.toLowerCase().includes(lowerTerm) ||
+          c.mode.toLowerCase().includes(lowerTerm)
+      );
+    }
+
+    // Filter by Status
+    if (filterStatus !== "ALL") {
+      data = data.filter((c) => c.status === filterStatus);
+    }
+
+    // Sort
+    if (sortConfig) {
+      data.sort((a, b) => {
+        let aVal: any = a[sortConfig.key as keyof Course];
+        let bVal: any = b[sortConfig.key as keyof Course];
+
+        if (sortConfig.key === "students") {
+          aVal = getStudentCount(a.id);
+          bVal = getStudentCount(b.id);
+        }
+
+        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return data;
+  }, [user.id, searchTerm, filterStatus, sortConfig]);
+
+  const totalPages = Math.ceil(processedCourses.length / pageSize);
+  const currentCourses = processedCourses.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handleSort = (key: string) => {
+    setSortConfig((current) => ({
+      key,
+      direction:
+        current?.key === key && current.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const getSortIndicator = (key: string) => {
+    if (sortConfig?.key !== key) return null;
+    return sortConfig.direction === "asc" ? " ↑" : " ↓";
+  };
 
   const getFilterButtonClass = (status: "ALL" | Status) => {
     const isActive = filterStatus === status;
@@ -1014,39 +1408,260 @@ const VendorCourseManagementView: React.FC = () => {
             <input
               type="text"
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm"
-              placeholder="Search by Course Title or ID"
+              placeholder="Search by Title, Code, Type, or Mode"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
           <div className="flex items-center gap-2 bg-secondary p-1 rounded-lg">
             <button
-              onClick={() => setFilterStatus("ALL")}
+              onClick={() => {
+                setFilterStatus("ALL");
+                setCurrentPage(1);
+              }}
               className={getFilterButtonClass("ALL")}
             >
               All
             </button>
             <button
-              onClick={() => setFilterStatus(Status.APPROVED)}
+              onClick={() => {
+                setFilterStatus(Status.APPROVED);
+                setCurrentPage(1);
+              }}
               className={getFilterButtonClass(Status.APPROVED)}
             >
               Approved
             </button>
             <button
-              onClick={() => setFilterStatus(Status.PENDING)}
+              onClick={() => {
+                setFilterStatus(Status.PENDING);
+                setCurrentPage(1);
+              }}
               className={getFilterButtonClass(Status.PENDING)}
             >
               Pending
             </button>
             <button
-              onClick={() => setFilterStatus(Status.REJECTED)}
+              onClick={() => {
+                setFilterStatus(Status.REJECTED);
+                setCurrentPage(1);
+              }}
               className={getFilterButtonClass(Status.REJECTED)}
             >
               Rejected
             </button>
           </div>
         </div>
-        <DataTable columns={columns} data={filteredCourses} />
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("title")}
+                >
+                  COURSE NAME {getSortIndicator("title")}
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("courseCode")}
+                >
+                  COURSE CODE {getSortIndicator("courseCode")}
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("type")}
+                >
+                  COURSE TYPE {getSortIndicator("type")}
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("mode")}
+                >
+                  MODE {getSortIndicator("mode")}
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("status")}
+                >
+                  STATUS {getSortIndicator("status")}
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort("students")}
+                >
+                  ENROLLED SEAFARER {getSortIndicator("students")}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  ACTIONS
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentCourses.length > 0 ? (
+                currentCourses.map((c) => {
+                  const count = getStudentCount(c.id);
+                  return (
+                    <tr
+                      key={c.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text-primary">
+                        {c.title}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                        {c.courseCode}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                        {c.type}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            c.mode === "Online"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-purple-100 text-purple-800"
+                          }`}
+                        >
+                          {c.mode}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <StatusBadge status={c.status} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Link
+                          to={`students?courseId=${c.id}`}
+                          className="text-primary font-bold hover:underline"
+                        >
+                          {count} Seafarers
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                        <div className="flex items-center space-x-3">
+                          <button
+                            onClick={() => navigate(`${c.id}/edit`)}
+                            className="hover:text-primary transition-colors"
+                            title="Edit Course"
+                          >
+                            <EditIcon />
+                          </button>
+                          <button
+                            onClick={() => navigate(`${c.id}`)}
+                            className="hover:text-primary transition-colors"
+                            title="View Details"
+                          >
+                            <ViewIcon />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-sm text-text-tertiary"
+                  >
+                    No courses found matching your search.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-4 py-3 border-t border-border-color flex items-center justify-between bg-gray-50">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <Button
+                variant="secondary"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Showing{" "}
+                  <span className="font-medium">
+                    {(currentPage - 1) * pageSize + 1}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-medium">
+                    {Math.min(currentPage * pageSize, processedCourses.length)}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium">{processedCourses.length}</span>{" "}
+                  results
+                </p>
+              </div>
+              <div>
+                <nav
+                  className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                  aria-label="Pagination"
+                >
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                      currentPage === 1
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="sr-only">Previous</span>
+                    <ChevronLeftIcon className="h-5 w-5" />
+                  </button>
+                  {Array.from({ length: totalPages }).map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentPage(idx + 1)}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        currentPage === idx + 1
+                          ? "z-10 bg-blue-50 border-primary text-primary"
+                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                      }`}
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                      currentPage === totalPages
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="sr-only">Next</span>
+                    <ChevronRightIcon className="h-5 w-5" />
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
@@ -1060,19 +1675,23 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
   const { courseId } = useParams();
   const navigate = useNavigate();
 
+  // Define today's date for validation
+  const today = new Date().toISOString().split("T")[0];
+
   // Find course if in edit or view mode
   const existingCourse =
     mode !== "create" ? courses.find((c) => c.id === courseId) : undefined;
 
-  // Load distinct categories from courselist
-  const distinctCategories = useMemo(() => {
-    // courselist is expected to be an array of objects
+  // Flattened list of all titles for the dropdown
+  const allCourseTitles = useMemo(() => {
     const list = Array.isArray(courselist) ? courselist : [];
-    const categories = list.map((c: any) => c.Category || c.category);
-    // Filter out null/undefined and get unique values
-    return Array.from(new Set(categories))
-      .filter((c: any) => typeof c === "string" && c.trim() !== "")
-      .sort() as string[];
+    // Ensure unique titles
+    const titles = list
+      .map(
+        (c: any) => c["Course Name"] || c.courseName || c.title || c.name || ""
+      )
+      .filter((t: any) => t && typeof t === "string");
+    return Array.from(new Set(titles)).sort();
   }, []);
 
   // If we're not creating and can't find the course, show error
@@ -1108,36 +1727,16 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
     price: existingCourse?.fee || "",
     currency: "INR",
     duration: existingCourse?.duration || "",
-    startDate: "",
-    endDate: "",
+    startDate: existingCourse?.startDate || "",
+    endDate: existingCourse?.endDate || "",
     instructor: existingCourse?.instructor || "",
     mode: "Online",
     location: existingCourse?.location || "",
-    courseType: (existingCourse as any)?.category || "", // Use existing category or empty
+    courseType: (existingCourse as any)?.category || "",
+    targetAudience: (existingCourse as any)?.targetAudience || "",
   });
 
-  // Now we can define availableCourseTitles correctly depending on formData
-  const filteredCourseTitles = useMemo(() => {
-    let list = Array.isArray(courselist) ? courselist : [];
-
-    // Filter by selected category
-    if (formData.courseType) {
-      list = list.filter((c: any) => {
-        if (typeof c === "string") return false;
-        const cat = c.Category || c.category;
-        return cat === formData.courseType;
-      });
-    }
-
-    const titles = list.map((c: any) => {
-      if (typeof c === "string") return c;
-      return c["Course Name"] || c.courseName || c.title || c.name || "";
-    });
-
-    return Array.from(new Set(titles))
-      .filter((t: any) => typeof t === "string" && t.trim() !== "")
-      .sort() as string[];
-  }, [formData.courseType]);
+  const [isSuspended, setIsSuspended] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -1154,6 +1753,37 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
       setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  // Handler for title change (auto-populates type and audience)
+  const handleTitleSelect = (val: string | string[]) => {
+    const selectedTitle = Array.isArray(val) ? val[0] : val;
+
+    // Find metadata
+    const list = Array.isArray(courselist) ? courselist : [];
+    const courseData = list.find(
+      (c: any) =>
+        (c["Course Name"] || c.courseName || c.title || c.name) ===
+        selectedTitle
+    );
+
+    setFormData((prev) => ({
+      ...prev,
+      title: selectedTitle,
+      courseType:
+        courseData?.Category || courseData?.category || prev.courseType, // Auto-fill
+      targetAudience:
+        courseData?.["Target Audience"] || courseData?.targetAudience || "", // Auto-fill
+    }));
+
+    // Clear error
+    if (errors.title) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.title;
         return newErrors;
       });
     }
@@ -1190,8 +1820,19 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
     if (!formData.mode) newErrors.mode = "Mode is required";
     if (!formData.duration) newErrors.duration = "Duration is required";
     if (!formData.price) newErrors.price = "Fees are required";
-    if (!formData.startDate) newErrors.startDate = "Start Date is required";
-    if (!formData.endDate) newErrors.endDate = "End Date is required";
+
+    // Date Validation
+    if (!formData.startDate) {
+      newErrors.startDate = "Start Date is required";
+    } else if (formData.startDate < today && mode === "create") {
+      newErrors.startDate = "Start Date cannot be in the past";
+    }
+
+    if (!formData.endDate) {
+      newErrors.endDate = "End Date is required";
+    } else if (formData.startDate && formData.endDate <= formData.startDate) {
+      newErrors.endDate = "End Date must be greater than Start Date";
+    }
 
     if (formData.mode === "Offline" && !formData.location?.trim()) {
       newErrors.location = "Location is required for offline courses";
@@ -1239,60 +1880,57 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
               Core Details
             </h3>
             <div className="space-y-6">
+              {/* Course Title - Primary Selection */}
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">
-                  Course Type <span className="text-red-500">*</span>
+                  Course Title <span className="text-red-500">*</span>
                 </label>
-                <select
+                <SearchableDropdown
+                  options={allCourseTitles}
+                  value={formData.title}
+                  onChange={handleTitleSelect}
+                  placeholder="Select Course Title"
+                  readOnly={isReadOnly}
+                  error={!!errors.title}
+                />
+                {errors.title && (
+                  <p className="mt-1 text-xs text-red-500">{errors.title}</p>
+                )}
+              </div>
+
+              {/* Course Type - Locked */}
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">
+                  Course Type{" "}
+                  <span className="text-gray-400 text-xs">(Auto-filled)</span>
+                </label>
+                <input
+                  type="text"
                   value={formData.courseType}
-                  onChange={(e) =>
-                    handleInputChange("courseType", e.target.value)
-                  }
-                  className={`block w-full rounded-md border ${
-                    errors.courseType ? "border-red-500" : "border-border-color"
-                  } bg-white px-4 py-2 text-text-primary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm`}
-                  disabled={isReadOnly}
-                >
-                  <option value="">Select Category</option>
-                  {distinctCategories.length > 0 ? (
-                    distinctCategories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))
-                  ) : (
-                    <>
-                      <option value="Beginner">Beginner</option>
-                      <option value="Intermediate">Intermediate</option>
-                      <option value="Advanced">Advanced</option>
-                    </>
-                  )}
-                </select>
+                  readOnly
+                  placeholder="Select a title first"
+                  className="block w-full rounded-md border border-gray-200 bg-gray-50 px-4 py-2 text-text-primary focus:outline-none sm:text-sm cursor-not-allowed"
+                />
                 {errors.courseType && (
                   <p className="mt-1 text-xs text-red-500">
                     {errors.courseType}
                   </p>
                 )}
               </div>
+
+              {/* Target Audience - Locked */}
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">
-                  Course Title <span className="text-red-500">*</span>
+                  Target Audience{" "}
+                  <span className="text-gray-400 text-xs">(Auto-filled)</span>
                 </label>
-                <SearchableDropdown
-                  options={filteredCourseTitles}
-                  value={formData.title}
-                  onChange={(val) => handleInputChange("title", val)}
-                  placeholder={
-                    formData.courseType
-                      ? "Select Course Title"
-                      : "Select Category First"
-                  }
-                  readOnly={isReadOnly || !formData.courseType}
-                  error={!!errors.title}
+                <input
+                  type="text"
+                  value={formData.targetAudience}
+                  readOnly
+                  placeholder="Select a title first"
+                  className="block w-full rounded-md border border-gray-200 bg-gray-50 px-4 py-2 text-text-primary focus:outline-none sm:text-sm cursor-not-allowed"
                 />
-                {errors.title && (
-                  <p className="mt-1 text-xs text-red-500">{errors.title}</p>
-                )}
               </div>
 
               <div>
@@ -1484,11 +2122,16 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
                   <div className="col-span-3">
                     <input
                       type="number"
+                      step="0.01"
+                      min="0"
                       value={formData.price}
-                      onChange={(e) =>
-                        handleInputChange("price", e.target.value)
-                      }
-                      placeholder="7500"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "" || /^\d*\.?\d{0,2}$/.test(val)) {
+                          handleInputChange("price", val);
+                        }
+                      }}
+                      placeholder="7500.00"
                       className={`block w-full rounded-md border ${
                         errors.price ? "border-red-500" : "border-border-color"
                       } px-4 py-2 text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm`}
@@ -1519,14 +2162,17 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
                 <input
                   type="date"
                   value={formData.startDate}
+                  min={today}
                   onChange={(e) =>
                     handleInputChange("startDate", e.target.value)
                   }
+                  readOnly={isReadOnly || mode === "edit"}
                   placeholder="mm/dd/yyyy"
                   className={`block w-full rounded-md border ${
                     errors.startDate ? "border-red-500" : "border-border-color"
-                  } px-4 py-2 text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm`}
-                  readOnly={isReadOnly}
+                  } px-4 py-2 text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm ${
+                    mode === "edit" ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
                 />
                 {errors.startDate && (
                   <p className="mt-1 text-xs text-red-500">
@@ -1541,6 +2187,15 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
                 <input
                   type="date"
                   value={formData.endDate}
+                  min={
+                    formData.startDate
+                      ? new Date(
+                          new Date(formData.startDate).getTime() + 86400000
+                        )
+                          .toISOString()
+                          .split("T")[0]
+                      : today
+                  }
                   onChange={(e) => handleInputChange("endDate", e.target.value)}
                   placeholder="mm/dd/yyyy"
                   className={`block w-full rounded-md border ${
@@ -1562,6 +2217,39 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
             />
           </div>
 
+          {/* Suspension Option (Edit Mode Only) */}
+          {mode === "edit" && (
+            <div className="bg-white p-8 rounded-xl border border-red-200 shadow-sm mb-6">
+              <h3 className="text-lg font-bold text-red-700 mb-4">
+                Course Status
+              </h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-text-primary">
+                    {isSuspended ? "Resume Course" : "Suspend Course"}
+                  </p>
+                  <p className="text-sm text-text-secondary mt-1">
+                    {isSuspended
+                      ? "The course is currently suspended. Click to reactivate and allow new enrollments."
+                      : "Suspend this course to prevent new enrollments. Existing students can still access it."}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className={
+                    isSuspended
+                      ? "bg-green-600 hover:bg-green-700 text-white border-transparent"
+                      : "border-red-300 text-red-600 hover:bg-red-50"
+                  }
+                  onClick={() => setIsSuspended(!isSuspended)}
+                >
+                  {isSuspended ? "Reactivate Course" : "Suspend Course"}
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end gap-4">
             {mode === "view" ? (
               <Button
@@ -1578,7 +2266,7 @@ const VendorCourseEditor: React.FC<VendorCourseEditorProps> = ({ mode }) => {
                   onClick={() => navigate("/dashboard/courses")}
                   className="px-8 py-3"
                 >
-                  Cancel
+                  Reset
                 </Button>
                 <Button
                   variant="primary-dark"
@@ -1833,6 +2521,7 @@ const DashboardPages: React.FC = () => {
       <Route path="profile" element={<UserProfileView />} />
       <Route path="courses" element={<VendorCourseManagementView />} />
       <Route path="students" element={<StudentEnrollmentView />} />
+      <Route path="courses/students" element={<StudentEnrollmentView />} />
       <Route
         path="courses/new"
         element={<VendorCourseEditor mode="create" />}
